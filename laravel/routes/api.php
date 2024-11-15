@@ -1,5 +1,6 @@
 <?php
 
+//api.php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\api\TaskController;
@@ -20,13 +21,14 @@ Route::get('/user', function (Request $request) {
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/refreshtoken', [AuthController::class, 'refreshToken']);
+    Route::get('/users/me', [UserController::class , 'showMe']);
 });
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 // User Routes
-Route::resource('users', UserController::class); // For all CRUD actions
-Route::post('/users/restore/{id}', [UserController::class, 'restore']); // For restoring soft-deleted users
-Route::post('/login', [UserController::class, 'loginWithRememberToken']);
+//Route::resource('users', UserController::class); // For all CRUD actions
+//Route::post('/users/restore/{id}', [UserController::class, 'restore']); // For restoring soft-deleted users
+//Route::post('/login', [UserController::class, 'loginWithRememberToken']);
 
 // Task Routes
 Route::get('/tasks', [TaskController::class, 'index']);

@@ -31,50 +31,27 @@ class AuthController extends Controller
     {
         $this->purgeExpiredTokens();
         $credentials = $request->validated();
-
         if (!Auth::attempt($credentials)) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-
-        // Generate a random token
-        $token = Str::random(60);
-
-        // Save the token in the user's remember_token field
-        $user = Auth::user();
-        $user->remember_token = hash('sha256', $token); // Storing a hashed version for security
-        $user->save();
-
-        // Return the plain text token to the user
+        $token = $request->user()->createToken('authToken', ['*'],
+            now()->addHours(2))->plainTextToken;
         return response()->json(['token' => $token]);
     }
-
     public function logout(Request $request)
     {
         $this->purgeExpiredTokens();
-
-        $user = $request->user();
-        $user->remember_token = null;
-        $user->save();
-
+        $this->revokeCurrentToken($request->user());
         return response()->json(null, 204);
     }
-
     public function refreshToken(Request $request)
     {
+        // Revokes current token and creates a new token
         $this->purgeExpiredTokens();
-
-        $user = $request->user();
-
-        // Revoke the current token
-        $user->remember_token = null;
-        $user->save();
-
-        // Generate and save a new token
-        $newToken = Str::random(60);
-        $user->remember_token = hash('sha256', $newToken); // Hash the new token
-        $user->save();
-
-        return response()->json(['token' => $newToken]);
+        $this->revokeCurrentToken($request->user());
+        $token = $request->user()->createToken('authToken', ['*'],
+            now()->addHours(2))->plainTextToken;
+        return response()->json(['token' => $token]);
     }
 
 }

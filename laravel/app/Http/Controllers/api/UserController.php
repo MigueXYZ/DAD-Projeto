@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\api;
 
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -123,4 +124,11 @@ class UserController extends Controller
 
         return response()->json(['message' => 'User restored successfully'], 200);
     }
+
+    public function showMe(Request $request): JsonResponse
+    {
+        $user = new UserResource($request->user());
+        return response()->json($user, 200);
+    }
+
 }
