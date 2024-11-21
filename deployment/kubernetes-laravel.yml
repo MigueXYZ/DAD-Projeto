@@ -17,6 +17,15 @@ spec:
       containers:
         - name: api
           image: registry.172.22.21.107.sslip.io/dad-group-5/api:v1.0.0
+          env:
+            - name: APP_ENV
+              value: "local"
+            - name: DB_DATABASE
+              value: "project"
+            - name: DB_USERNAME
+              value: "root"
+            - name: DB_PASSWORD
+              value: ""
 
 ---
 apiVersion: v1

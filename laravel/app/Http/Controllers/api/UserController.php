@@ -16,7 +16,7 @@ class UserController extends Controller
     /**
      * Display a listing of the resource, including soft-deleted users if requested.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         // If `with_deleted` query parameter is set, include soft-deleted users
         if ($request->query('with_deleted')) {
@@ -25,13 +25,14 @@ class UserController extends Controller
             $users = User::all();
         }
 
-        return response()->json($users, 200);
+        // Return the users with a 200 OK status
+        return UserResource::collection($users);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): UserResource
     {
         // Validate the data
         $validated_data = $request->validate([
@@ -55,22 +56,23 @@ class UserController extends Controller
         $user = User::create($validated_data);
 
         // Return the user with a 201 Created status
-        return response()->json($user, 201);
+        return new UserResource($user);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(User $user): JsonResponse
+    public function show(User $user): UserResource
     {
         // Return the user with a 200 OK status
-        return response()->json($user, 200);
+        // return response()->json($user, 200);
+        return new UserResource($user);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, User $user): JsonResponse
+    public function update(Request $request, User $user): UserResource
     {
         // Validate the data, email is unique except for the current user
         $validated_data = $request->validate([
@@ -99,7 +101,7 @@ class UserController extends Controller
         $user->update($validated_data);
 
         // Return the updated user with a 200 OK status
-        return response()->json($user, 200);
+        return new UserResource($user);
     }
 
     /**
@@ -125,10 +127,9 @@ class UserController extends Controller
         return response()->json(['message' => 'User restored successfully'], 200);
     }
 
-    public function showMe(Request $request): JsonResponse
+    public function showMe(Request $request): UserResource
     {
-        $user = new UserResource($request->user());
-        return response()->json($user, 200);
+        return new UserResource($request->user());
     }
 
 }

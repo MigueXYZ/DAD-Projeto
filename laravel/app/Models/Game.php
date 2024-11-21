@@ -28,6 +28,7 @@ class Game extends Model
         'custom' => 'array',
     ];
 
+
     /**
      * Relationship with User who created the game
      */

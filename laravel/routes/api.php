@@ -30,21 +30,6 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 //Route::post('/users/restore/{id}', [UserController::class, 'restore']); // For restoring soft-deleted users
 //Route::post('/login', [UserController::class, 'loginWithRememberToken']);
 
-// Task Routes
-Route::get('/tasks', [TaskController::class, 'index']);
-Route::get('/tasks/{task}', [TaskController::class, 'show']);
-Route::post('/tasks', [TaskController::class, 'store']);
-Route::put('/tasks/{task}', [TaskController::class, 'update']);
-Route::patch('/tasks/{task}/completed', [TaskController::class, 'updateCompleted']);
-Route::delete('/tasks/{task}', [TaskController::class, 'destroy']);
-
-// Project Routes
-Route::get('/projects', [ProjectController::class, 'index']);
-Route::get('/projects/{project}', [ProjectController::class, 'show']);
-Route::post('/projects', [ProjectController::class, 'store']);
-Route::put('/projects/{project}', [ProjectController::class, 'update']);
-Route::delete('/projects/{project}', [ProjectController::class, 'destroy']);
-
 // Board Routes
 Route::get('/boards', [BoardController::class, 'index']);
 Route::get('/boards/{board}', [BoardController::class, 'show']);

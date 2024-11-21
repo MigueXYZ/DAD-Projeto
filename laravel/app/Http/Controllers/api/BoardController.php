@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BoardResource;
 use App\Models\Board;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -12,12 +13,11 @@ class BoardController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): JsonResponse
+    public function index()
     {
         // Retrieve all boards
         $boards = Board::all();
-
-        return response()->json($boards, 200);
+        return BoardResource::collection($boards);
     }
 
     /**
