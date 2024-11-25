@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MultiplayerGamesPlayedResource;
 use App\Models\MultiplayerGamesPlayed;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -12,18 +13,18 @@ class MultiplayerGamesPlayedController extends Controller
     /**
      * Display a listing of the multiplayer games played.
      */
-    public function index(): JsonResponse
+    public function index()
     {
         // Retrieve all multiplayer games played
         $gamesPlayed = MultiplayerGamesPlayed::all();
 
-        return response()->json($gamesPlayed, 200);
+        return MultiplayerGamesPlayedResource::collection($gamesPlayed);
     }
 
     /**
      * Store a newly created multiplayer game record.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): MultiplayerGamesPlayedResource
     {
         // Validate the request data
         $validated_data = $request->validate([
@@ -37,21 +38,21 @@ class MultiplayerGamesPlayedController extends Controller
         // Create a new multiplayer game record
         $multiplayerGame = MultiplayerGamesPlayed::create($validated_data);
 
-        return response()->json($multiplayerGame, 201); // 201 Created
+        return new MultiplayerGamesPlayedResource($multiplayerGame); // 201 Created
     }
 
     /**
      * Display the specified multiplayer game record.
      */
-    public function show(MultiplayerGamesPlayed $multiplayerGame): JsonResponse
+    public function show(MultiplayerGamesPlayed $multiplayerGame): MultiplayerGamesPlayedResource
     {
-        return response()->json($multiplayerGame, 200);
+        return new MultiplayerGamesPlayedResource($multiplayerGame);
     }
 
     /**
      * Update the specified multiplayer game record.
      */
-    public function update(Request $request, MultiplayerGamesPlayed $multiplayerGame): JsonResponse
+    public function update(Request $request, MultiplayerGamesPlayed $multiplayerGame): MultiplayerGamesPlayedResource
     {
         // Validate the request data
         $validated_data = $request->validate([
@@ -65,7 +66,7 @@ class MultiplayerGamesPlayedController extends Controller
         // Update the multiplayer game record
         $multiplayerGame->update($validated_data);
 
-        return response()->json($multiplayerGame, 200); // 200 OK
+        return new MultiplayerGamesPlayedResource($multiplayerGame); // 200 OK
     }
 
     /**

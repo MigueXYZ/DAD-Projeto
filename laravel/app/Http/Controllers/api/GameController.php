@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\GameResource;
 use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
@@ -13,18 +14,18 @@ class GameController extends Controller
     /**
      * Display a listing of the games.
      */
-    public function index(): JsonResponse
+    public function index()
     {
         // Retrieve all games
         $games = Game::all();
 
-        return response()->json($games, 200);
+        return GameResource::collection($games);
     }
 
     /**
      * Store a newly created game in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): GameResource
     {
         // Validate the request data
         $validated_data = $request->validate([
@@ -42,21 +43,21 @@ class GameController extends Controller
         // Create the game
         $game = Game::create($validated_data);
 
-        return response()->json($game, 201); // 201 Created
+        return new GameResource($game); // 201 Created
     }
 
     /**
      * Display the specified game.
      */
-    public function show(Game $game): JsonResponse
+    public function show(Game $game): GameResource
     {
-        return response()->json($game, 200);
+        return new GameResource($game);
     }
 
     /**
      * Update the specified game in storage.
      */
-    public function update(Request $request, Game $game): JsonResponse
+    public function update(Request $request, Game $game): GameResource
     {
         // Validate the request data
         $validated_data = $request->validate([
@@ -74,7 +75,7 @@ class GameController extends Controller
         // Update the game
         $game->update($validated_data);
 
-        return response()->json($game, 200); // 200 OK
+        return new GameResource($game); // 200 OK
     }
 
     /**

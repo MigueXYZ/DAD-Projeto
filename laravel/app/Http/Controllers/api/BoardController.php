@@ -23,7 +23,7 @@ class BoardController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): BoardResource
     {
         // Validate the request data
         $validated_data = $request->validate([
@@ -35,21 +35,21 @@ class BoardController extends Controller
         // Create the board
         $board = Board::create($validated_data);
 
-        return response()->json($board, 201); // 201 Created
+        return new BoardResource($board); // 201 Created
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Board $board): JsonResponse
+    public function show(Board $board): BoardResource
     {
-        return response()->json($board, 200);
+        return new BoardResource($board);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Board $board): JsonResponse
+    public function update(Request $request, Board $board): BoardResource
     {
         // Validate the request data
         $validated_data = $request->validate([
@@ -61,7 +61,7 @@ class BoardController extends Controller
         // Update the board
         $board->update($validated_data);
 
-        return response()->json($board, 200); // 200 OK
+        return new BoardResource($board); // 200 OK
     }
 
     /**
