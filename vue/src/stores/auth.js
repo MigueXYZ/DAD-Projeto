@@ -4,6 +4,7 @@ import axios from 'axios'
 import { useErrorStore } from '@/stores/error'
 
 import avatarNoneAssetURL from '@/assets/avatar-none.png'
+import router from "@/router/index.js";
 
 export const useAuthStore = defineStore('auth', () => {
   const storeError = useErrorStore()
@@ -11,8 +12,18 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
   const token = ref('')
 
+  let intervalToRefreshToken = null
+
   const userName = computed(() => {
     return user.value ? user.value.name : ''
+  })
+
+  const userId = computed(() => {
+    return user.value ? user.value.id : ''
+  })
+
+  const isLoggedIn = computed(() => {
+    return user.value !== null
   })
 
   const userFirstLastName = computed(() => {
@@ -32,6 +43,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   const userGender = computed(() => {
     return user.value ? user.value.gender : ''
+  })
+
+  const userBrainCoins = computed(() => {
+    return user.value ? user.value.brainCoinsBalance : ''
   })
 
   const userPhotoUrl = computed(() => {
@@ -54,10 +69,12 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const responseLogin = await axios.post('auth/login', credentials)
       token.value = responseLogin.data.token
+      localStorage.setItem('token', token.value)
       axios.defaults.headers.common.Authorization = 'Bearer ' + token.value
       const responseUser = await axios.get('users/me')
-      user.value = responseUser.data
+      user.value = responseUser.data.data
       repeatRefreshToken()
+      await router.push({name: 'dashboard'})
       return user.value
     } catch (e) {
       clearUser()
@@ -89,7 +106,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  let intervalToRefreshToken = null
+  // Refresh token function
+  const refreshToken = async () => {
+    try {
+      const response = await axios.post('auth/refreshtoken');
+      token.value = response.data.token;
+      localStorage.setItem('token', token.value)
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
+    } catch (error) {
+      console.error('Refresh token failed:', error.response?.data?.message || error.message);
+    }
+  };
 
   const resetIntervalToRefreshToken = () => {
     if (intervalToRefreshToken) {
@@ -125,6 +152,24 @@ export const useAuthStore = defineStore('auth', () => {
     return intervalToRefreshToken
   }
 
+  const restoreToken = async function () {
+    let storedToken = localStorage.getItem('token')
+    if (storedToken) {
+      try {
+        token.value = storedToken
+        axios.defaults.headers.common.Authorization = 'Bearer ' + token.value
+        const responseUser = await axios.get('users/me')
+        user.value = responseUser.data.data
+        repeatRefreshToken()
+        return true
+      } catch {
+        clearUser()
+        return false
+      }
+    }
+    return false
+  }
+
   return {
     user,
     userName,
@@ -133,7 +178,12 @@ export const useAuthStore = defineStore('auth', () => {
     userType,
     userGender,
     userPhotoUrl,
+    userBrainCoins,
+    userId,
+    isLoggedIn,
     login,
-    logout
+    logout,
+    refreshToken,
+    restoreToken
   }
 })

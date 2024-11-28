@@ -3,12 +3,16 @@ import { createPinia } from 'pinia'
 import axios from 'axios'
 import { io } from 'socket.io-client'
 
+
 import '@/assets/base.css'
+import '@/assets/main.css'
 
 import App from './App.vue'
 import router from './router'
 
 const app = createApp(App)
+
+
 
 app.use(router)
 
