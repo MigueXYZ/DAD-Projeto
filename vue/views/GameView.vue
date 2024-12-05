@@ -133,11 +133,10 @@ const gameStore = useGameStore();
         console.log('BOARD ID', game.value.board_id);
 
         // Fetch board data based on board_id
-        const response = await axios.get(`http://localhost:8081/api/boards/${game.value.board_id}`);
-        console.log('BOARD', response);
+        const response = await axios.get(`boards/${game.value.board_id}`);
         try {
           console.log('BOARD 2', response);
-          const t_data = response.data;
+          const t_data = response.data.data;
           board.board_cols = t_data.board_cols || 0;
           board.board_rows = t_data.board_rows || 1;
 

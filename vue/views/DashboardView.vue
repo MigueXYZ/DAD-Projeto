@@ -81,7 +81,7 @@ const checkAuth = () => {
 const load = async () => {
   try {
     // const response = await axios.get('http://api-dad-group-5-172.22.21.101.sslip.io/api/boards');
-    const response = await axios.get('http://localhost:8081/api/boards');
+    const response = await axios.get('boards');
     boards.value = response.data; // Assign response data
     console.log('Boards:', boards.value); // Log fetched boards
   } catch (error) {
