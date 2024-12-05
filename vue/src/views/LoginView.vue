@@ -56,54 +56,59 @@
   </div>
 </template>
 
-<script>
-import { useAuthStore } from '@/stores/auth'; // Importa a store de autenticação
+<script setup>
+import { ref } from 'vue';
+import { useAuthStore } from '@/stores/auth'; // Import authentication store
+import { useRouter } from 'vue-router';
 
-export default {
-  data() {
-    return {
-      credentials: {
-        email: '',
-        password: '',
-      },
-      isValidEmail: true,
-      errorMessage: '',
-    };
-  },
-  methods: {
-    validateEmail() {
-      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      this.isValidEmail = emailPattern.test(this.credentials.email);
-    },
-    async handleLogin() {
-      if (!this.isValidEmail) {
-        this.errorMessage = "Please enter a valid email.";
-        return;
-      }
 
-      // Check if credentials are filled
-      if (!this.credentials.email || !this.credentials.password) {
-        this.errorMessage = "Email and password are required.";
-        return;
-      }
+const credentials = ref({
+  email: '',
+  password: '',
+}); // Reactive object for credentials
+const isValidEmail = ref(true); // Reactive variable for email validation state
+const errorMessage = ref(''); // Reactive variable for error messages
+const authStore = useAuthStore(); // Access authentication store
+const router = useRouter(); // Access router instance
 
-      const authStore = useAuthStore(); // Acessa a store de autenticação
-
-      try {
-        // Chama a função de login da store
-        await authStore.login(this.credentials);
-
-        // Se o login for bem-sucedido, redireciona para o dashboard
-        this.$router.push({name: 'dashboard'});
-      } catch (e) {
-        console.error('Login failed:', e);
-        this.errorMessage = e.response?.data?.message || 'Login failed. Please try again.';
-      }
-    },
-    playAsGuest() {
-      this.$router.push('/size');
-    },
-  },
+// Validate email format
+const validateEmail = () => {
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  isValidEmail.value = emailPattern.test(credentials.value.email);
 };
-</script>
 
+// Handle login
+const handleLogin = async () => {
+  validateEmail(); // Validate email before proceeding
+
+  if (!isValidEmail.value) {
+    errorMessage.value = 'Please enter a valid email.';
+    return;
+  }
+
+  if (!credentials.value.email || !credentials.value.password) {
+    errorMessage.value = 'Email and password are required.';
+    return;
+  }
+
+  try {
+    // Call login function from the auth store
+    await authStore.login(credentials.value);
+
+    // Redirect to dashboard if login is successful
+    await router.push({ name: 'dashboard' });
+  } catch (e) {
+    console.error('Login failed:', e);
+    errorMessage.value =
+        e.response?.data?.message || 'Login failed. Please try again.';
+  }
+};
+
+// Navigate to play as a guest
+const playAsGuest = () => {
+  authStore.anonymousLogin(); // Chama o método de login anônimo
+  router.push('/dashboard');
+};
+
+
+</script>

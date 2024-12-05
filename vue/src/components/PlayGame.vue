@@ -6,10 +6,10 @@
 
     <!-- Botão desabilitado se o saldo de brain_coins for 0 -->
     <button
-        
+
         @click="startGame"
         class="w-full py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-200"
-        
+
     >
       Start Game
     </button>
@@ -19,7 +19,7 @@
 </template>
 
 <script>
-import { useRouter } from 'vue-router';
+import {useRouter} from 'vue-router';
 
 export default {
   setup() {
