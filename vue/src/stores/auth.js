@@ -7,24 +7,22 @@ import avatarNoneAssetURL from '@/assets/avatar-none.png'
 import router from "@/router/index.js";
 
 export const useAuthStore = defineStore('auth', () => {
-  const storeError = useErrorStore()
-
-  const user = ref(null)
-  const token = ref('')
-
-  let intervalToRefreshToken = null
-
-  const userName = computed(() => {
-    return user.value ? user.value.name : ''
-  })
+  const storeError = useErrorStore();
+  const user = ref(null);
+  const token = ref('');
+  let intervalToRefreshToken = null;
 
   const userId = computed(() => {
     return user.value ? user.value.id : ''
   })
 
   const isLoggedIn = computed(() => {
-    return user.value !== null
-  })
+    return user.value?.id !== 'guest' && user.value !== null;
+  });
+
+  const userName = computed(() => {
+    return user.value ? user.value.name : '';
+  });
 
   const userFirstLastName = computed(() => {
     const names = userName.value.trim().split(' ')
@@ -57,12 +55,14 @@ export const useAuthStore = defineStore('auth', () => {
     return avatarNoneAssetURL
   })
 
-  // This function is "private" - not exported by the store
+  // Clear user and reset token refresh
   const clearUser = () => {
-    resetIntervalToRefreshToken()
-    user.value = null
-    axios.defaults.headers.common.Authorization = ''
-  }
+    resetIntervalToRefreshToken(); // Limpar intervalo de refresh do token
+    user.value = null;
+    token.value = '';
+    localStorage.removeItem('token')
+    axios.defaults.headers.common['Authorization'] = '';
+  };
 
   const login = async (credentials) => {
     storeError.resetMessages()
@@ -70,7 +70,7 @@ export const useAuthStore = defineStore('auth', () => {
       const responseLogin = await axios.post('auth/login', credentials)
       token.value = responseLogin.data.token
       localStorage.setItem('token', token.value)
-      axios.defaults.headers.common.Authorization = 'Bearer ' + token.value
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
       const responseUser = await axios.get('users/me')
       user.value = responseUser.data.data
       repeatRefreshToken()
@@ -91,9 +91,12 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     storeError.resetMessages()
     try {
-      await axios.post('auth/logout')
-      clearUser()
-      return true
+      if(user.value.id === 'guest') {
+        localStorage.remove('anonymousUser');
+      }else{
+        await axios.post('auth/logout');
+        clearUser(); // Limpa os dados do usuário e do token
+      }
     } catch (e) {
       clearUser()
       storeError.setErrorMessages(
@@ -114,7 +117,13 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('token', token.value)
       axios.defaults.headers.common['Authorization'] = `Bearer ${token.value}`;
     } catch (error) {
-      console.error('Refresh token failed:', error.response?.data?.message || error.message);
+        clearUser()
+        storeError.setErrorMessages(
+            error.response.data.message,
+            error.response.data.errors,
+            error.response.status,
+            'Token Refresh Error!'
+        )
     }
   };
 
@@ -164,11 +173,33 @@ export const useAuthStore = defineStore('auth', () => {
         return true
       } catch {
         clearUser()
+        storeError.setErrorMessages(
+          'Invalid token',
+          [],
+          401,
+          'Authentication');
         return false
       }
     }
     return false
   }
+
+  // Login anônimo local
+  const anonymousLogin = () => {
+    user.value = {
+      id: 'guest', // Gerar um ID único localmente
+      name: 'Guest User',
+      email: 'guest@example.com',
+      brain_coins_balance: 0, // Definir saldo inicial, se aplicável
+      isAnonymous: true, // Identificar que é um usuário anônimo
+    };
+    token.value = null; // Sem token porque é local
+    try{
+      localStorage.setItem('anonymousUser', JSON.stringify(user.value)); // Salvar no localStorage para persistência
+    }catch (e) {
+      storeError('Error saving anonymous user in local storage', [], 500, 'Local Storage Error');
+    }
+  };
 
   return {
     user,
@@ -184,6 +215,7 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     refreshToken,
+    anonymousLogin,
     restoreToken
   }
 })

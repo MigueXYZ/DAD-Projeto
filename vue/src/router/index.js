@@ -54,7 +54,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Check if user is logged in and trying to access protected routes
-  const protectedRoutes = ['updateTask', 'updateProject']; // Example routes that need authentication
+  const protectedRoutes = ['Scoreboard']; // Example routes that need authentication
 
   if (protectedRoutes.includes(to.name) && !storeAuth.isLoggedIn) {
     // If the user is not logged in, redirect to login page

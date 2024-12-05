@@ -19,12 +19,21 @@
 </template>
 
 <script>
-  export default{
-    methods: {
-      startGame(){
-        this.$router.push('/size');
-      }
-    }
-    
-  };
+import { useRouter } from 'vue-router';
+
+export default {
+  setup() {
+    const router = useRouter(); // Access the router instance
+
+    // Function to navigate to the size selection page
+    const startGame = () => {
+      router.push('/size');
+    };
+
+    return {
+      startGame,
+    };
+  },
+};
 </script>
+

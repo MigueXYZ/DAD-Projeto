@@ -69,8 +69,15 @@ class GameController extends Controller
             'ended_at' => 'nullable|date|after_or_equal:began_at',
             'total_time' => 'nullable|numeric',
             'board_id' => 'sometimes|exists:boards,id',
-            'custom' => 'nullable|array', // Optional JSON field
+            'custom' => 'nullable|array',
+        ], [
+            'created_user_id.exists' => 'O criador deve ser um usuário válido.',
+            'winner_user_id.exists' => 'O vencedor deve ser um usuário válido.',
+            'type.in' => 'O tipo deve ser "S" (Singleplayer) ou "M" (Multiplayer).',
+            'status.in' => 'O status deve ser "PE", "PL", "E" ou "I".',
+            'ended_at.after_or_equal' => 'A data de término deve ser igual ou posterior à data de início.',
         ]);
+
 
         // Update the game
         $game->update($validated_data);
