@@ -57,10 +57,18 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the projects associated with the user.
+     * Get the games created by the user.
      */
-    public function projects(): HasMany
+    public function createdGames(): HasMany
     {
-        return $this->hasMany(Project::class, 'created_by_id');
+        return $this->hasMany(Game::class, 'created_user_id');
+    }
+
+    /**
+     * Get the games won by the user.
+     */
+    public function wonGames(): HasMany
+    {
+        return $this->hasMany(Game::class, 'winner_user_id');
     }
 }
