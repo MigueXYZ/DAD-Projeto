@@ -63,4 +63,10 @@ class User extends Authenticatable
     {
         return $this->hasMany(Project::class, 'created_by_id');
     }
+
+    public function games()
+    {
+        return $this->hasMany(Game::class, 'created_user_id');
+    }
+
 }

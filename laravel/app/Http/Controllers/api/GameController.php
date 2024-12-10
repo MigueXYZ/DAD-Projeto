@@ -37,6 +37,7 @@ class GameController extends Controller
             'ended_at' => 'nullable|date|after_or_equal:began_at',
             'total_time' => 'nullable|numeric',
             'board_id' => 'required|exists:boards,id',
+            'total_turns_winner' => 'nullable|integer|min:1',
             'custom' => 'nullable|array', // Optional JSON field
         ]);
 
@@ -69,6 +70,7 @@ class GameController extends Controller
             'ended_at' => 'nullable|date|after_or_equal:began_at',
             'total_time' => 'nullable|numeric',
             'board_id' => 'sometimes|exists:boards,id',
+            'total_turns_winner' => 'nullable|integer|min:1',
             'custom' => 'nullable|array',
         ], [
             'created_user_id.exists' => 'O criador deve ser um usuário válido.',
@@ -76,6 +78,8 @@ class GameController extends Controller
             'type.in' => 'O tipo deve ser "S" (Singleplayer) ou "M" (Multiplayer).',
             'status.in' => 'O status deve ser "PE", "PL", "E" ou "I".',
             'ended_at.after_or_equal' => 'A data de término deve ser igual ou posterior à data de início.',
+            'board_id.exists' => 'O tabuleiro deve ser válido.',
+            'total_turns_winner.min' => 'O número de turnos do vencedor deve ser no mínimo 1.',
         ]);
 
 
@@ -95,4 +99,31 @@ class GameController extends Controller
 
         return response()->json(['message' => 'Game deleted successfully'], 204); // 204 No Content
     }
+
+    public function showMe(Request $request)
+    {
+        // Obtém o utilizador autenticado
+        $user = $request->user();
+
+        // Lê os parâmetros opcionais da query string
+        $board = $request->query('board'); // Exemplo: /games/me?board=1
+        $by = $request->query('by'); // Exemplo: /games/me?by=totaL_turns_winner
+        $order = $request->query('order'); // Exemplo: /games/me?order=asc
+
+        // Filtra jogos com base nos parâmetros
+        $query = $user->games();
+
+        if ($board) {
+            $query->where('board_id', $board);
+        }
+
+        if ($by && in_array($order, ['asc', 'desc'])) {
+            $query->orderBy($by, $order);
+        }
+
+        $games = $query->get();
+
+        return GameResource::collection($games);
+    }
+
 }

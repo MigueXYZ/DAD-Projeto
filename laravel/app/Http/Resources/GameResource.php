@@ -41,6 +41,7 @@ class GameResource extends JsonResource
             'total_time' => $this->total_time,
             'board_id' => $this->board_id,
             'custom' => $this->custom,
+            'total_turns_winner' => $this->total_turns_winner,
         ];
     }
 }
