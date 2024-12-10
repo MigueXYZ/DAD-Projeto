@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::post('/auth/refreshtoken', [AuthController::class, 'refreshToken']);
     Route::get('/users/me', [UserController::class , 'showMe']);
+    Route::patch('/users/me', [UserController::class , 'updateMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
 });
 Route::post('/auth/login', [AuthController::class, 'login']);

@@ -132,5 +132,36 @@ class UserController extends Controller
         return new UserResource($request->user());
     }
 
+    /**
+     * Update the authenticated user.
+     */
+    public function updateMe(Request $request): UserResource
+    {
+        // Validate the data, email is unique except for the current user
+        $validated_data = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'email' => [
+                'sometimes',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($request->user()->id)
+            ],
+            'password' => 'sometimes|string|min:8',
+            'nickname' => 'nullable|string|max:20',
+            'photo_filename' => 'nullable|string|max:255',
+            'brain_coins_balance' => 'sometimes|integer|min:0',
+            'custom' => 'nullable|array',  // Validate JSON as array
+        ]);
 
+        // Update password if it's provided
+        if (isset($validated_data['password'])) {
+            $validated_data['password'] = Hash::make($validated_data['password']);
+        }
+
+        // Update the user
+        $request->user()->update($validated_data);
+
+        // Return the updated user with a 200 OK status
+        return new UserResource($request->user());
+    }
 }

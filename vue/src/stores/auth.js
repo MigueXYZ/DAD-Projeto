@@ -5,6 +5,7 @@ import { useErrorStore } from '@/stores/error'
 
 import avatarNoneAssetURL from '@/assets/avatar-none.png'
 import router from "@/router/index.js";
+import {useRouter} from "vue-router";
 
 export const useAuthStore = defineStore('auth', () => {
   const storeError = useErrorStore();

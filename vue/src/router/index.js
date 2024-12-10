@@ -6,6 +6,8 @@ import LoginView from "@/views/LoginView.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import SelectSizeView from "@/views/SelectSizeView.vue";
 import GameView from "@/views/GameView.vue";
+import GameHistoryView from "@/views/GameHistoryView.vue";
+import ScoreboardView from "@/views/ScoreboardView.vue";
 import {useAuthStore} from "@/stores/auth.js";
 import {useGameStore} from "@/stores/game.js";
 
@@ -20,6 +22,8 @@ const router = createRouter({
     { path: '/dashboard', component: DashboardView, name: 'dashboard' }, // Dashboard page route
     { path: '/size', component: SelectSizeView, name: 'size' },
     { path: '/game', component: GameView, name: 'game' },
+    { path: '/history', component: GameHistoryView, name: 'history'},
+    { path: '/scoreboard', component: ScoreboardView, name: 'scoreboard'},
     {
       path: '/testers',
       children: [
@@ -54,7 +58,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Check if user is logged in and trying to access protected routes
-  const protectedRoutes = ['Scoreboard']; // Example routes that need authentication
+  const protectedRoutes = ['updateProject', 'history', 'scoreboard']; // Example routes that need authentication
 
   if (protectedRoutes.includes(to.name) && !storeAuth.isLoggedIn) {
     // If the user is not logged in, redirect to login page
