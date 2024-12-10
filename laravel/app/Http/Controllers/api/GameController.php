@@ -15,14 +15,36 @@ class GameController extends Controller
     /**
      * Display a listing of the games.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Retrieve all games
-        $games = Game::all();
+        $user = $request->user(); // Obter o utilizador autenticado, se existir
 
+        // Lê os parâmetros da query string (filtros)
+        $board = $request->query('board'); // Filtro por board
+        $by = $request->query('by'); // Filtro por ordenação
+        $order = $request->query('order'); // Direção da ordenação
+
+
+            // Se o utilizador não está autenticado, mostramos apenas o scoreboard global
+            $query = Game::where('status', 'E'); // Só jogos terminados
+
+
+        // Aplicar filtro por board, se existir
+        if ($board) {
+            $query->where('board_id', $board);
+        }
+
+        // Aplicar filtro por ordenação, se existir
+        if ($by && in_array($order, ['asc', 'desc'])) {
+            $query->orderBy($by, $order);
+        }
+
+        // Filtra jogos globalmente ou apenas os do utilizador autenticado
+        $games = $query->get();
+
+        // Retorna os jogos como um recurso JSON
         return GameResource::collection($games);
     }
-
     /**
      * Store a newly created game in storage.
      */

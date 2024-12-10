@@ -27,6 +27,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
 });
 Route::post('/auth/login', [AuthController::class, 'login']);
 
+Route::get('/users/names', [UserController::class, 'getNames']);
+
 // User Routes
 //Route::resource('users', UserController::class); // For all CRUD actions
 //Route::post('/users/restore/{id}', [UserController::class, 'restore']); // For restoring soft-deleted users

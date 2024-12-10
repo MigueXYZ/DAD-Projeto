@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Str;
+use Psy\Util\Json;
 
 class UserController extends Controller
 {
@@ -130,6 +131,17 @@ class UserController extends Controller
     public function showMe(Request $request): UserResource
     {
         return new UserResource($request->user());
+    }
+
+    // Get the names of all users
+    public function getNames():JsonResponse
+    {
+        $users = User::all();
+        $names = $users->map(function ($user) {
+            return $user->name;
+        });
+
+        return response()->json($names, 200);
     }
 
     /**
