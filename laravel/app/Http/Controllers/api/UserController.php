@@ -179,6 +179,36 @@ class UserController extends Controller
     public function getTop(Request $request)
     {
         try {
+            // Determine the ordering
+            $orderBy = $request->get('by', 'total_time'); // Default to 'total_time'
+            $direction = 'asc';
+
+            if ($orderBy == 'total_time') {
+                // Initialize the query
+                $query = Game::with('creator', 'board')
+                    ->selectRaw('
+                                            created_user_id,
+                                            board_id,
+                                            MIN(total_time) as total_time,
+                                            total_turns_winner
+                                        ')
+                    ->where('status', 'E') // Only completed games
+                    ->groupBy('created_user_id', 'board_id'); // Group by player and board
+            } elseif ($orderBy == 'total_turns_winner') {
+                // Initialize the query
+                $query = Game::with('creator', 'board')
+                    ->selectRaw('
+                                            created_user_id,
+                                            board_id,
+                                            total_time,
+                                            MIN(total_turns_winner) as total_turns_winner
+                                        ')
+                    ->where('status', 'E') // Only completed games
+                    ->groupBy('created_user_id', 'board_id'); // Group by player and board
+            } else {
+                return response()->json(['error' => 'Invalid ordering parameter'], 400);
+            }
+
             // Initialize the query
             $query = Game::with('creator', 'board')
                 ->selectRaw('
@@ -194,10 +224,6 @@ class UserController extends Controller
             if ($request->has('board') && $request->board != '') {
                 $query->where('board_id', $request->board);
             }
-
-            // Determine the ordering
-            $orderBy = $request->get('by', 'total_time'); // Default to 'total_time'
-            $direction = 'asc';
 
             // Apply ordering
             if (in_array($orderBy, ['total_time', 'total_turns_winner'])) {
