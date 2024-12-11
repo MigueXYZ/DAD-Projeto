@@ -24,7 +24,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users/me', [UserController::class , 'showMe']);
     Route::patch('/users/me', [UserController::class , 'updateMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
-    Route::get('/users/top', [UserController::class , 'getTop']);
 });
 
 Route::patch('/games/{game}', [GameController::class, 'update']);
@@ -32,6 +31,8 @@ Route::patch('/games/{game}', [GameController::class, 'update']);
 Route::get('/games/{game}', [GameController::class, 'show']);
 
 Route::post('/auth/login', [AuthController::class, 'login']);
+
+Route::get('/users/top', [UserController::class , 'getTop']);
 
 Route::get('/users/names', [UserController::class, 'getNames']);
 

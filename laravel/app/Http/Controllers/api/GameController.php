@@ -8,6 +8,7 @@ use App\Models\Game;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class GameController extends Controller
@@ -93,41 +94,44 @@ class GameController extends Controller
     /**
      * Verifica se o jogo do utilizador é um recorde.
      */
-    private function checkForRecord(Game $game)
+    public function checkForRecord(Game $game)
     {
         $user = User::find($game->created_user_id);
 
         if (!$user) {
-            return; // Caso o utilizador não exista
+            Log::error("User  not found: {$game->created_user_id}");
+            return;
         }
 
-        // Verificar se o utilizador bateu o recorde pessoal
-        $topUserGame = Game::where('created_user_id', $game->created_user_id)
-            ->where('total_time', '>', 0)
-            ->orderBy('total_time')
-            ->first(); // Use first() instead of get()
+        Log::info("User  found: {$user->id}");
 
-        // Se o utilizador tiver menos de 10 jogos, ou se o tempo do novo jogo for melhor do que o pior dos 10 melhores jogos
-        if ($game->total_time < $topUserGame->total_time) {
-            // Adicionar 1 brain coin para o recorde pessoal
-            $user->increment('brain_coins_balance');
-            $user->save();
-        }
-
-        $topGlobalGames = Game::where('status', 'E')
+        //get users personal record
+        $topUserGames = Game::where('status', 'E')
+            ->where('created_user_id', $user->id)
+            ->where('board_id', $game->board_id)
             ->where('total_time', '>', 0)
             ->orderBy('total_time')
             ->limit(3)
             ->get();
 
-        // Check if there are any global games
-        if ($topGlobalGames->isNotEmpty() && $game->total_time < $topGlobalGames->last()->total_time) {
-            // Adicionar 1 brain coin para o top 3 global
-            $user->increment('brain_coins_balance');
-            $user->save();
+        if (!$topUserGames || ($topUserGames->count() < 3 || $game->total_time < $topUserGames->last()->total_time)) {
+            $user->increment('brain_coins_balance', 1);
+            Log::info("User top beaten! User: {$user->id}, Game: {$game->id}, New balance: {$user->brain_coins_balance}");
         }
-    }
 
+        // Check global record
+        $topGlobalGames = Game::where('status', 'E')
+            ->where('board_id', $game->board_id)
+            ->where('total_time', '>', 0)
+            ->orderBy('total_time')
+            ->limit(3)
+            ->get();
+
+        if ($topGlobalGames->isNotEmpty() && ($topGlobalGames->count() < 3 || $game->total_time < $topGlobalGames->last()->total_time)) {
+            $user->increment('brain_coins_balance', 1);
+            Log::info("Global top beaten! User: {$user->id}, Game: {$game->id}, New balance: {$user->brain_coins_balance}");
+        }
+}
 
     /**
      * Display the specified game.
