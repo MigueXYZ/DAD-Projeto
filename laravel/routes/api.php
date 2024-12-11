@@ -24,10 +24,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users/me', [UserController::class , 'showMe']);
     Route::patch('/users/me', [UserController::class , 'updateMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
+    Route::get('/users/top', [UserController::class , 'getTop']);
 });
+
+Route::patch('/games/{game}', [GameController::class, 'update']);
+
+Route::get('/games/{game}', [GameController::class, 'show']);
+
 Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::get('/users/names', [UserController::class, 'getNames']);
+
+
 
 // User Routes
 //Route::resource('users', UserController::class); // For all CRUD actions
@@ -45,7 +53,6 @@ Route::delete('/boards/{board}', [BoardController::class, 'destroy']);
 Route::get('/games', [GameController::class, 'index']);
 Route::get('/games/{game}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
-Route::put('/games/{game}', [GameController::class, 'update']);
 Route::delete('/games/{game}', [GameController::class, 'destroy']);
 
 // MultiplayerGamesPlayed Routes

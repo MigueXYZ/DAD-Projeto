@@ -9,6 +9,8 @@ class Game extends Model
 {
     use HasFactory;
 
+    protected $primaryKey = 'id';
+
     protected $fillable = [
         'created_user_id',
         'winner_user_id',
@@ -51,7 +53,7 @@ class Game extends Model
      */
     public function board()
     {
-        return $this->belongsTo(Board::class);
+        return $this->belongsTo(Board::class,'board_id');
     }
 
     /**

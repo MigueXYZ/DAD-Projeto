@@ -17,34 +17,49 @@ class GameController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user(); // Obter o utilizador autenticado, se existir
+        $user = $request->user(); // Get the authenticated user
 
-        // Lê os parâmetros da query string (filtros)
-        $board = $request->query('board'); // Filtro por board
-        $by = $request->query('by'); // Filtro por ordenação
-        $order = $request->query('order'); // Direção da ordenação
-
-
-            // Se o utilizador não está autenticado, mostramos apenas o scoreboard global
-            $query = Game::where('status', 'E'); // Só jogos terminados
+        // Read filter parameters from the query string
+        $board = $request->query('board');  // Board filter
+        $by = $request->query('by', 'created_at');  // Sorting field
+        $order = $request->query('order', 'desc');  // Sort direction
 
 
-        // Aplicar filtro por board, se existir
+        // Start with the base query: only include finished games
+        $query = Game::where('status', 'E');
+
+        // Apply the board filter if it exists
         if ($board) {
             $query->where('board_id', $board);
         }
 
-        // Aplicar filtro por ordenação, se existir
-        if ($by && in_array($order, ['asc', 'desc'])) {
+        // Apply sorting filter if it's valid
+        if (in_array($by, ['total_time', 'total_turns_winner']) && in_array($order, ['asc', 'desc'])) {
             $query->orderBy($by, $order);
+            // Ordena por parâmetros fornecidos
+            if ($by && in_array($order, ['asc', 'desc'])) {
+                $query->orderBy($by, $order);
+                if($by === 'total_time'){
+                    $query->orderBy('total_turns_winner', 'asc');
+                }
+                if($by === 'total_turns_winner'){
+                    $query->orderBy('total_time', 'asc');
+                }
+            }
         }
 
-        // Filtra jogos globalmente ou apenas os do utilizador autenticado
-        $games = $query->get();
+        // If the user is authenticated, filter by their games
+        if ($user) {
+            $query->where('user_id', $user->id);  // Assuming the user's ID is stored in 'user_id' in the Game model
+        }
 
-        // Retorna os jogos como um recurso JSON
+        // Paginate the results (5 games per page)
+        $games = $query->paginate(5);
+
+        // Return the games as a paginated JSON resource
         return GameResource::collection($games);
     }
+
     /**
      * Store a newly created game in storage.
      */
@@ -90,8 +105,7 @@ class GameController extends Controller
         $topUserGame = Game::where('created_user_id', $game->created_user_id)
             ->where('total_time', '>', 0)
             ->orderBy('total_time')
-            ->limit(1)
-            ->get();
+            ->first(); // Use first() instead of get()
 
         // Se o utilizador tiver menos de 10 jogos, ou se o tempo do novo jogo for melhor do que o pior dos 10 melhores jogos
         if ($game->total_time < $topUserGame->total_time) {
@@ -100,15 +114,14 @@ class GameController extends Controller
             $user->save();
         }
 
-        // Verificar se o utilizador bateu um dos top 3 melhores tempos globais
         $topGlobalGames = Game::where('status', 'E')
             ->where('total_time', '>', 0)
             ->orderBy('total_time')
             ->limit(3)
             ->get();
 
-        // Se o tempo do jogo atual for melhor do que o pior tempo entre os 3 melhores jogos globais
-        if ($game->total_time < $topGlobalGames->last()->total_time) {
+        // Check if there are any global games
+        if ($topGlobalGames->isNotEmpty() && $game->total_time < $topGlobalGames->last()->total_time) {
             // Adicionar 1 brain coin para o top 3 global
             $user->increment('brain_coins_balance');
             $user->save();
@@ -127,9 +140,12 @@ class GameController extends Controller
     /**
      * Update the specified game in storage.
      */
-    public function update(Request $request, Game $game): GameResource
+    public function update(Request $request,  Game $game)
     {
-        // Validate the request data
+        //confirmei e está bem
+        //return $game;
+
+        // Validar os dados da requisição
         $validated_data = $request->validate([
             'created_user_id' => 'sometimes|exists:users,id',
             'winner_user_id' => 'nullable|exists:users,id',
@@ -151,17 +167,21 @@ class GameController extends Controller
             'total_turns_winner.min' => 'O número de turnos do vencedor deve ser no mínimo 1.',
         ]);
 
+        //confirmei e está certo
+        //return $validated_data;
 
-        // Update the game
-        $game->update($validated_data);
+        // Atualizar o jogo com os dados validados
+        $game->update($validated_data);  // O $game já é o modelo, sem necessidade de busca adicional
 
-        // Verificar se o jogo é um recorde
+        // Verificar se o jogo é um recorde (após a atualização)
         if ($game->status === 'E') {
             $this->checkForRecord($game);
         }
 
+        // Retornar o recurso de jogo atualizado
         return new GameResource($game); // 200 OK
     }
+
 
     /**
      * Remove the specified game from storage.
@@ -180,24 +200,45 @@ class GameController extends Controller
         $user = $request->user();
 
         // Lê os parâmetros opcionais da query string
-        $board = $request->query('board'); // Exemplo: /games/me?board=1
-        $by = $request->query('by'); // Exemplo: /games/me?by=totaL_turns_winner
-        $order = $request->query('order'); // Exemplo: /games/me?order=asc
+        $board = $request->query('board');
+        $by = $request->query('by');
+        $order = $request->query('order');
+        $ended= $request->query('ended');
+
+        // Validar a ordem de ordenação
+        if ($order && !in_array($order, ['asc', 'desc'])) {
+            return response()->json(['error' => 'Invalid order direction'], 400);
+        }
 
         // Filtra jogos com base nos parâmetros
         $query = $user->games();
 
+        if($ended){
+            $query->where('status', 'E');
+        }
+
+        // Filtra por board, se fornecido
         if ($board) {
             $query->where('board_id', $board);
         }
 
+        // Ordena por parâmetros fornecidos
         if ($by && in_array($order, ['asc', 'desc'])) {
             $query->orderBy($by, $order);
+            if($by === 'total_time'){
+                $query->orderBy('total_turns_winner', 'asc');
+            }
+            if($by === 'total_turns_winner'){
+                $query->orderBy('total_time', 'asc');
+            }
         }
 
-        $games = $query->get();
+        // Pagina os resultados
+        $games = $query->paginate(5);
 
+        // Retorna os jogos com a resposta formatada
         return GameResource::collection($games);
     }
+
 
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\api;
 
 use App\Http\Resources\UserResource;
+use App\Models\Game;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -136,12 +137,10 @@ class UserController extends Controller
     // Get the names of all users
     public function getNames():JsonResponse
     {
-        $users = User::all();
-        $names = $users->map(function ($user) {
-            return $user->name;
-        });
+        //return names and their's correspondent id
+        $users = User::all('id', 'name');
+        return response()->json($users, 200);
 
-        return response()->json($names, 200);
     }
 
     /**
@@ -176,4 +175,69 @@ class UserController extends Controller
         // Return the updated user with a 200 OK status
         return new UserResource($request->user());
     }
+
+    public function getTop(Request $request)
+    {
+        try {
+            // Initialize the query
+            $query = Game::with('creator', 'board')
+                ->selectRaw('
+                created_user_id,
+                board_id,
+                MIN(total_time) as total_time,
+                MIN(total_turns_winner) as total_turns_winner
+            ')
+                ->where('status', 'E') // Only completed games
+                ->groupBy('created_user_id', 'board_id'); // Group by player and board
+
+            // Filter by board if provided
+            if ($request->has('board') && $request->board != '') {
+                $query->where('board_id', $request->board);
+            }
+
+            // Determine the ordering
+            $orderBy = $request->get('by', 'total_time'); // Default to 'total_time'
+            $direction = 'asc';
+
+            // Apply ordering
+            if (in_array($orderBy, ['total_time', 'total_turns_winner'])) {
+                $query->orderBy($orderBy, $direction);
+            }
+
+            // Handle pagination
+            $perPage = $request->get('per_page', 10); // Default to 10 results per page
+            $page = $request->get('page', 1);
+
+            $paginatedResults = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Format the data
+            $formattedData = $paginatedResults->getCollection()->map(function ($game) {
+                $name = $game->creator ? $game->creator->name : 'Unknown'; // Check if the creator exists
+                return [
+                    'id' => $game->id,
+                    'name' => $name,
+                    'total_time' => $game->total_time,
+                    'total_turns_winner' => $game->total_turns_winner,
+                    'board' => $game->board->board_cols . 'x' . $game->board->board_rows,
+                ];
+            });
+
+            // Return the paginated response
+            return response()->json([
+                'data' => $formattedData,
+                'meta' => [
+                    'current_page' => $paginatedResults->currentPage(),
+                    'per_page' => $paginatedResults->perPage(),
+                    'total' => $paginatedResults->total(),
+                    'last_page' => $paginatedResults->lastPage(),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            // Return a 500 error on exception
+            return response()->json(['error' => 'Failed to fetch top players', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+
+
 }

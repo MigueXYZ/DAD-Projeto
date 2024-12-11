@@ -29,6 +29,6 @@ class Board extends Model
      */
     public function games()
     {
-        return $this->hasMany(Game::class);
+        return $this->hasMany(Game::class. 'board_id');
     }
 }

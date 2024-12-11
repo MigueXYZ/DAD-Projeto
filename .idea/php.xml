@@ -125,6 +125,9 @@
       <path value="$PROJECT_DIR$/laravel/vendor/laravel/pint" />
       <path value="$PROJECT_DIR$/laravel/vendor/doctrine/lexer" />
       <path value="$PROJECT_DIR$/laravel/vendor/doctrine/inflector" />
+      <path value="$PROJECT_DIR$/laravel/vendor/staabm/side-effects-detector" />
+      <path value="$PROJECT_DIR$/laravel/vendor/league/uri-interfaces" />
+      <path value="$PROJECT_DIR$/laravel/vendor/league/uri" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
