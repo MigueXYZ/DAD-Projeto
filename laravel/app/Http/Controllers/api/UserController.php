@@ -5,6 +5,8 @@ namespace App\Http\Controllers\api;
 use App\Http\Resources\UserResource;
 use App\Models\Game;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -15,6 +17,8 @@ use Psy\Util\Json;
 
 class UserController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Display a listing of the resource, including soft-deleted users if requested.
      */
@@ -108,9 +112,13 @@ class UserController extends Controller
 
     /**
      * Soft delete the specified resource from storage.
+     * @throws AuthorizationException
      */
-    public function destroy(User $user): JsonResponse
+    public function destroyMe(User $user): JsonResponse
     {
+        $this->authorize('delete', $user);
+        //remove brain coins from user
+        $user->brain_coins_balance = 0;
         // Soft delete the user
         $user->delete();
 

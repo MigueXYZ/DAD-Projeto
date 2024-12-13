@@ -23,7 +23,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/auth/refreshtoken', [AuthController::class, 'refreshToken']);
     Route::get('/users/me', [UserController::class , 'showMe']);
     Route::patch('/users/me', [UserController::class , 'updateMe']);
+    Route::delete('/users/me', [UserController::class , 'destroyMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
+    Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);
 });
 
 Route::patch('/games/{game}', [GameController::class, 'update']);

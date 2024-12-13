@@ -77,4 +77,9 @@ class User extends Authenticatable
         return $this->hasMany(Game::class, 'created_user_id');
     }
 
+    public function isAdmin()
+    {
+        return $this->type === 'A';
+    }
+
 }

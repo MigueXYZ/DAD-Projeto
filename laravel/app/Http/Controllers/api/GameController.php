@@ -83,25 +83,27 @@ class GameController extends Controller
         // Create the game
         $game = Game::create($validated_data);
 
-        // Verificar se o jogo é um recorde
-        if ($game->status === 'E') {
-            $this->checkForRecord($game);
-        }
-
         return new GameResource($game); // 201 Created
     }
 
     /**
      * Verifica se o jogo do utilizador é um recorde.
      */
-    public function checkForRecord(Game $game)
+    public function checkForRecord(Game $game): int
     {
+        if ($game->status !== 'E') {
+            Log::info("Game is not finished: {$game->id}");
+            return -2;
+        }
+
         $user = User::find($game->created_user_id);
 
         if (!$user) {
             Log::error("User  not found: {$game->created_user_id}");
-            return;
+            return -1;
         }
+
+        $ret=0;
 
         Log::info("User  found: {$user->id}");
 
@@ -117,6 +119,7 @@ class GameController extends Controller
         if (!$topUserGames || ($topUserGames->count() < 3 || $game->total_time < $topUserGames->last()->total_time)) {
             $user->increment('brain_coins_balance', 1);
             Log::info("User top beaten! User: {$user->id}, Game: {$game->id}, New balance: {$user->brain_coins_balance}");
+            $ret+=1;
         }
 
         // Check global record
@@ -130,8 +133,11 @@ class GameController extends Controller
         if ($topGlobalGames->isNotEmpty() && ($topGlobalGames->count() < 3 || $game->total_time < $topGlobalGames->last()->total_time)) {
             $user->increment('brain_coins_balance', 1);
             Log::info("Global top beaten! User: {$user->id}, Game: {$game->id}, New balance: {$user->brain_coins_balance}");
+            $ret += 2;
         }
-}
+
+        return $ret;
+    }
 
     /**
      * Display the specified game.
@@ -176,11 +182,6 @@ class GameController extends Controller
 
         // Atualizar o jogo com os dados validados
         $game->update($validated_data);  // O $game já é o modelo, sem necessidade de busca adicional
-
-        // Verificar se o jogo é um recorde (após a atualização)
-        if ($game->status === 'E') {
-            $this->checkForRecord($game);
-        }
 
         // Retornar o recurso de jogo atualizado
         return new GameResource($game); // 200 OK
