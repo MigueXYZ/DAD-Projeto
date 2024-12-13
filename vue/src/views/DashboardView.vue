@@ -33,8 +33,10 @@
               </button>
               -->
           </div>
-          <div v-if="authStore.isLoggedIn" class=" grid grid-cols-2 gap-x-4">
+          <div
+              :class=" authStore.isLoggedIn ? 'grid grid-cols-2 gap-x-4' : 'grid grid-cols-1 gap-x-4'">
             <button
+                v-if="authStore.isLoggedIn"
                 @click="gameHistory"
                 class="w-auto lg:w-full py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-md  transition duration-200 my-2"
             >
@@ -78,17 +80,20 @@ import PlayGame from '@/components/PlayGame.vue';
 import SizeSelector from '@/components/SizeSelector.vue';
 
 
+
 const user = ref(null); // Reactive variable for the authenticated user
 const boards = ref([]); // Reactive variable for board data
 const router = useRouter(); // Access the router instance
 const authStore = useAuthStore(); // Access authentication store
 
 // Check authentication status
-const checkAuth = () => {
+const checkAuth = async () => {
   if (authStore.user) {
     user.value = authStore.user;
+    const response = await axios.get(`/users/me`);
+    authStore.setUser(response.data.data);
   } else {
-    router.push('/login'); // Redirect to login if not authenticated
+    await router.push('/login'); // Redirect to login if not authenticated
   }
 };
 
@@ -96,7 +101,7 @@ const checkAuth = () => {
 const load = async () => {
   try {
     // const response = await axios.get('http://api-dad-group-5-172.22.21.101.sslip.io/api/boards');
-    const response = await axios.get('http://localhost:8081/api/boards');
+    const response = await axios.get('/boards');
     boards.value = response.data; // Assign response data
     console.log('Boards:', boards.value); // Log fetched boards
   } catch (error) {

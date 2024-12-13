@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/users/me', [UserController::class , 'destroyMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
     Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);
+    Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
 });
 
 Route::patch('/games/{game}', [GameController::class, 'update']);

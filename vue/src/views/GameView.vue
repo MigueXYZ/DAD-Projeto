@@ -1,18 +1,40 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
-    <h1 class="text-2xl font-bold mb-4 text-center">Game Board</h1>
-    <div @click="winpopUp">TESTE</div>
+    <div class="w-full grid grid-cols-2 gap-x-20 justify-between">
+    <!-- Left Side -->
+    <div class="flex justify-center lg:justify-end">
+      <h1 class="text-2xl pt-4 font-semibold ">
+        Game Board
+      </h1>
+      
+    </div>
+    
+    <!-- Right Side -->
+    <div>
+      <button
+          class="w-40 py-3 mb-4 bg-blue-700 hover:bg-blue-600 text-white rounded-md transition duration-200 my-2"
+          @click="hint"
+          v-if="authStore.user.brain_coins_balance > 0"
+      >
+        Hint
+      </button>
+    </div>
+  </div>
+
     <!-- Responsive grid for the game board -->
     <div
         v-if="board.board_cols > 0"
         :style="`grid-template-columns: repeat(${board.board_cols}, minmax(2rem, 1fr));`"
         class="grid gap-2 bg-white p-4 rounded shadow w-full max-w-lg"
     >
+
+    
+    
       <!-- Render each tile dynamically -->
       <div
           v-for="(tile, index) in tiles"
           :key="index"
-          class="w-full h-auto bg-gray-200 border border-gray-300 flex items-center justify-center text-sm sm:text-base cursor-pointer"
+          class="w-full h-full bg-gray-200 border border-gray-300 flex items-center justify-center text-sm sm:text-base cursor-pointer"
           @click="flipTile(tile)"
       >
         <!-- Show the tile's image -->
@@ -35,6 +57,8 @@ import { ref, computed, onMounted, reactive, inject } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
 import  router  from '@/router/index'
+import { useToast } from '@/components/ui/toast/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 const authStore = useAuthStore();
 const gameStore = useGameStore();
@@ -46,6 +70,8 @@ const board = reactive({
 const tilesFlipped = ref(0); // Reactive counter to track flipped tiles
 const flippedTiles = ref([]); // To store the currently flipped tiles
 const tiles = ref([]); // Reactive tiles array
+const { toast } = useToast(); // Use the toast function
+
 
 const alertDialog = inject('alertDialog'); // Inject alert dialog
 const shuffleArray = (array) => array.sort(() => Math.random() - 0.5);
@@ -59,12 +85,69 @@ const playAgain = () => {
   router.push('/size')
 
 }
+
+const hint = async () => {
+  console.log('Hint triggered');
+  console.log('Brain Coins:', authStore.user.brain_coins_balance);
+  if (authStore.user.brain_coins_balance <= 0) {
+    console.log('Not enough Brain Coins!');
+    return;
+  }
+
+  // Find a tile that is not matched and not flipped
+  const firstTile = tiles.value.find(tile => !tile.isMatched && !tile.isFlipped);
+
+  if (!firstTile) {
+    console.log('No available tile for a hint.');
+    return;
+  }
+
+  // Find the matching tile
+  const matchingTile = tiles.value.find(
+      tile => tile.id === firstTile.id && tile !== firstTile && !tile.isMatched && !tile.isFlipped
+  );
+
+  if (!matchingTile) {
+    console.log('No matching tile found.');
+    return;
+  }
+
+
+  // Deduct 1 Brain Coin
+  await axios.patch(`/users/me`, {
+    brain_coins_balance: authStore.user.brain_coins_balance - 1,
+  });
+  const response = await axios.get(`/users/me`);
+  authStore.setUser(response.data.data);
+
+  toast({
+    description: 'Brain Coin deducted for a hint.',
+  })
+
+
+
+
+  console.log('Hint: Revealing a pair of tiles.');
+  console.log('First Tile:', firstTile);
+  console.log('Matching Tile:', matchingTile);
+
+  // Flip the tiles
+  firstTile.isFlipped = true;
+  matchingTile.isFlipped = true;
+
+  // Optionally, flip them back after a delay (e.g., 1 second)
+  setTimeout(() => {
+    firstTile.isFlipped = false;
+    matchingTile.isFlipped = false;
+  }, 1000);
+};
+
 // Function to show win popup
 const winpopUp = () => {
   console.log(alertDialog.value)
   alertDialog.value.open(
       home,playAgain,
-      'Parabens, venceu o jogo!', 'Voltar a Dashboard', 'Jogar de novo', `O seu jogo durou: ${gameStore.game.total_time} segundos`
+      'Parabens, venceu o jogo!', 'Voltar a Dashboard', 'Jogar de novo', `O seu jogo durou: ${gameStore.game.total_time} segundos. Precisou de ${gameStore.game.total_turns_winner} jogadas para vencer.`
   );
 };
 
@@ -79,6 +162,7 @@ const flipTile = (tile) => {
 
   // Check if two tiles are flipped
   if (tilesFlipped.value === 2) {
+    gameStore.game.total_turns_winner++; // Increment the total turns counter
     // Compare the two flipped tiles
     const [firstTile, secondTile] = flippedTiles.value;
     if (firstTile.id === secondTile.id) {
@@ -103,12 +187,12 @@ const flipTile = (tile) => {
 };
 
 // Function to check if all tiles are matched
-const checkWin = () => {
+const checkWin = async () => {
   const allMatched = tiles.value.every(tile => tile.isMatched); // Check if all tiles are matched
   if (allMatched) {
     console.log('You win! All pairs are matched.');
     gameStore.calculateTotalTime();
-    gameStore.updateGame(); // Update the game data with the total time
+    await gameStore.updateGame(); // Update the game data with the total time
     winpopUp();
 
   }
@@ -135,7 +219,7 @@ const load = async () => {
     console.log(game.began_at);
 
     // Fetch board data based on board_id
-    const { data } = await axios.get(`http://localhost:8081/api/boards/${game.board_id}`);
+    const { data } = await axios.get(`/boards/${game.board_id}`);
 
     console.log('BOARD', data);
     const t_data=data.data

@@ -2,10 +2,13 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from './auth';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 export const useGameStore = defineStore('game', () => {
     const authStore = useAuthStore();
     const game = ref(null); // Armazena um único jogo
+    const { toast } = useToast();
 
     // Função para validar o formato da data e a data em si
     const isValidDate = (dateStr) => {
@@ -48,6 +51,7 @@ export const useGameStore = defineStore('game', () => {
             ended_at: null,
             total_time: null,
             custom: gameData.custom || null,
+            total_turns_winner: null,
         };
 
         if (authStore.isLoggedIn) {
@@ -84,11 +88,15 @@ export const useGameStore = defineStore('game', () => {
     const calculateTotalTime = () => {
         const now = new Date();
         const beganAt = new Date(game.value.began_at);
-        const diff = now - beganAt;
-        const seconds = Math.floor(diff / 1000);
-        game.value.total_time = seconds;
-        game.value.ended_at = getFormattedDate();
+        const diff = now - beganAt; // Diferença em milissegundos
+
+        // Transformar milissegundos em segundos e formatar para duas casas decimais
+        const seconds = (diff / 1000).toFixed(2);
+
+        game.value.total_time = parseFloat(seconds); // Garantir que seja um número float
+        game.value.ended_at = getFormattedDate(); // Função para formatar a data de encerramento
     };
+
 
     const getFormattedDate = () => {
         const now = new Date();
@@ -116,7 +124,39 @@ export const useGameStore = defineStore('game', () => {
             }
 
             // Envia a requisição PUT para atualizar o jogo
-            await axios.put(`/games/${game.value.id}`, game.value);
+            await axios.patch(`/games/${game.value.id}`, game.value);
+
+            const {data} = await axios.get(`/games/record/${game.value.id}`);
+            console.log(data);
+            if (data > 0){
+                let tipo;
+                let coins;
+                switch(data) {
+                    case 1:
+                        tipo = 'Record Pessoal Batido!';
+                        coins = 1;
+                        break;
+                    case 2:
+                        tipo = 'Record Global Batido!';
+                        coins = 1;
+                        break;
+                    case 3:
+                        tipo = 'Record Pessoal e Global Batido!';
+                        coins = 2;
+                        break;
+                    default:
+                        tipo = 'Record Batido!';
+                        coins = 1;
+                        break;
+                }
+                toast({
+                    description: tipo,
+                })
+                toast({
+                    description: 'Você ganhou '+ coins + ' moedas!',
+                })
+
+            }
 
             // Retorna verdadeiro se a atualização for bem-sucedida
             return true;
@@ -137,7 +177,7 @@ export const useGameStore = defineStore('game', () => {
         }
 
         try {
-            if (isUserLoggedIn.value) {
+            if (authStore.isLoggedIn) {
                 await axios.delete(`/games/${game.value.id}`);
             }
             clearGame();

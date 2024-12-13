@@ -46,9 +46,19 @@ class UserPolicy
      */
     public function delete(User $user, User $model): bool
     {
-        // Allow a user to delete their own profile, or if they are an admin
-        return $user->id === $model->id && !$user->isAdmin();
+        // Permitir que o próprio utilizador apague sua conta, exceto se for admin
+        if ($user->id === $model->id && !$user->isAdmin()) {
+            return true;
+        }
+
+        // Permitir que um admin apague qualquer utilizador, exceto outro admin
+        if ($user->isAdmin() && !$model->isAdmin()) {
+            return true;
+        }
+
+        return false;
     }
+
 
     /**
      * Determine whether the user can restore the model.

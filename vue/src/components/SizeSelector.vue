@@ -13,6 +13,10 @@ import { useGameStore } from '@/stores/game'; // Import the game store
 import { useRouter } from 'vue-router';
 import { reactive } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+import axios from 'axios';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { ToastAction } from '@/components/ui/toast';
+
 
 // Define props using defineProps
 const props = defineProps({
@@ -22,9 +26,11 @@ const props = defineProps({
   },
 });
 
+
 const router = useRouter(); // Access the router instance
 const gameStore = useGameStore(); // Access the game store
 const authStore = useAuthStore();
+const { toast } = useToast();
 
 
 const checkBrainCoins = (boardId) => {
@@ -66,12 +72,26 @@ const startGame = async () => {
 
     const success = await gameStore.createGame(state.gameData);
 
+    if(props.board.id !== 1){
+      // Deduct 1 Brain Coin
+      await axios.patch(`/users/me`, {
+        brain_coins_balance: authStore.user.brain_coins_balance - 1,
+      });
+      const coin = authStore.user.brain_coins_balance-1;
+      const response = await axios.get(`/users/me`);
+      authStore.setUser(response.data.data);
+      toast({
+        description: 'Teve 1 brain coin descontado, Novo saldo: ' + coin,
+      })
+
+
+    }
+
     if (success) {
       await router.push('/game'); // Navigate to the game page
     } else {
       console.error('Failed to create game', success);
     }
   }
-
 };
 </script>

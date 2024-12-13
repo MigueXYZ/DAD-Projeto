@@ -58,7 +58,7 @@ const showBoard = (boardId) => {
 // Fetch boards from API
 const load = async () => {
   try {
-    const response = await axios.get('http://localhost:8081/api/boards');
+    const response = await axios.get('/boards');
     boards.value = response.data.data; // Assign fetched data
     console.log('Boards:', boards.value); // Check fetched data in console
   } catch (error) {

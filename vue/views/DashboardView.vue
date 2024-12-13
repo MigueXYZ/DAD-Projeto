@@ -57,16 +57,18 @@ import { ref, onMounted } from 'vue';
 import { useAuthStore } from '@/stores/auth'; // Import authentication store
 import { useRouter } from 'vue-router';
 import axios from 'axios';
-
 import BrainCoinsBalance from '@/components/BrainCoinsBalance.vue'; // Import components
 import PlayGame from '@/components/PlayGame.vue';
 import SizeSelector from '@/components/SizeSelector.vue';
+import { useToast } from '@/components/ui/toast/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 
 const user = ref(null); // Reactive variable for the authenticated user
 const boards = ref([]); // Reactive variable for board data
 const router = useRouter(); // Access the router instance
 const authStore = useAuthStore(); // Access authentication store
+const { toast } = useToast();
 
 // Check authentication status
 const checkAuth = () => {

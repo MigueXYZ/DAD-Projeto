@@ -1,0 +1,136 @@
+import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
+import axios from 'axios';
+import { useAuthStore } from './auth';
+
+export const useGameStore = defineStore('game', () => {
+    const authStore = useAuthStore();
+    const isUserLoggedIn = computed(() => authStore.isLoggedIn); // Verifica se o utilizador está autenticado
+    const games = ref([]); // Lista de jogos armazenados localmente
+    const userId = computed(() => authStore.userId); // Obtém o ID do utilizador autenticado
+
+    // Função para validar o formato da data e a data em si
+    const isValidDate = (dateStr) => {
+        // Expressão regular para validar o formato 'YYYY-MM-DD HH:MM:SS'
+        const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\s([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
+        if (!dateRegex.test(dateStr)) {
+            return false;
+        }
+
+        // Verifica se a data é válida
+        const [datePart, timePart] = dateStr.split(' ');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes, seconds] = timePart.split(':').map(Number);
+
+        const date = new Date(year, month - 1, day, hours, minutes, seconds);
+        return (
+            date.getFullYear() === year &&
+            date.getMonth() === month - 1 &&
+            date.getDate() === day &&
+            date.getHours() === hours &&
+            date.getMinutes() === minutes &&
+            date.getSeconds() === seconds
+        );
+    };
+
+    // Função para criar um novo jogo
+    // Função para criar um novo jogo
+    const createGame = async (gameData) => {
+        // Verifique se o utilizador está autenticado
+        if (!isUserLoggedIn.value) {
+            console.error('Usuário não está autenticado');
+            return false;
+        }
+
+        // Verifica se o userId está definido e acessa corretamente o valor
+        const userIdValue = userId.value;
+        if (!userIdValue) {
+            console.error('ID do usuário não encontrado');
+            return false;
+        }
+
+        // Valida o formato da data antes de prosseguir
+        if (!isValidDate(gameData.began_at)) {
+            console.error('Formato de data inválido. Deve ser "YYYY-MM-DD HH:MM:SS".');
+            return false;
+        }
+
+        console.log('userIdValue:', userIdValue);
+
+        // Criação de um objeto com os dados do jogo
+        const newGame = {
+            id: null, // ID será atribuído pelo servidor
+            created_user_id: userIdValue, // Valor bruto do userId
+            type: gameData.type,
+            status: gameData.status,
+            began_at: gameData.began_at,
+            board_id: gameData.board_id,
+            winner_user_id: null, // Atribuído quando o jogo termina
+            ended_at: null, // Atribuído quando o jogo termina
+            total_time: null, // Atribuído quando o jogo termina
+            custom: gameData.custom || null, // Dados adicionais (opcional)
+        };
+
+        console.log('newGame before POST:', JSON.stringify(newGame, null, 2));
+
+        try {
+            // Se o utilizador estiver autenticado, envia os dados para o servidor
+            const response = await axios.post('/games', newGame);
+            newGame.id = response.data.id; // Atualiza o ID com o fornecido pelo servidor
+
+            // Adiciona o jogo à lista local
+            games.value.push({ ...newGame }); // Clona o objeto para evitar referências adicionais
+            return true;
+        } catch (error) {
+            console.error('Erro ao criar jogo:', error.response?.data?.message || error.message);
+            return false;
+        }
+    };
+
+
+    // Função para buscar jogos do servidor (apenas se autenticado)
+    const fetchGames = async () => {
+        if (!isUserLoggedIn.value) {
+            console.warn('Utilizador não autenticado. Apenas jogos locais disponíveis.');
+            return games.value;
+        }
+
+        try {
+            const response = await axios.get('/games');
+            games.value = response.data; // Substitui os jogos locais pelos jogos do servidor
+        } catch (error) {
+            console.error('Erro ao buscar jogos:', error.response?.data?.message || error.message);
+        }
+    };
+
+    // Função para remover um jogo
+    const deleteGame = async (gameId) => {
+        try {
+            // Remove do servidor se autenticado
+            if (isUserLoggedIn.value) {
+                await axios.delete(`/games/${gameId}`);
+            }
+
+            // Remove localmente
+            games.value = games.value.filter((game) => game.id !== gameId);
+            return true;
+        } catch (error) {
+            console.error('Erro ao remover jogo:', error.response?.data?.message || error.message);
+            return false;
+        }
+    };
+
+    // Add this to your store
+    const getLatestGame = computed(() => {
+        console.log('Games array:', games.value);
+        return games.value[games.value.length - 1]; // Returns the last game in the list
+    });
+
+    return {
+        games,
+        createGame,
+        fetchGames,
+        deleteGame,
+        getLatestGame,
+    };
+});

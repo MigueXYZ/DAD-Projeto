@@ -44,7 +44,7 @@ class UserController extends Controller
         $validated_data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users|max:255',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:3',
             'type' => 'required|in:A,P',
             'nickname' => 'nullable|string|max:20',
             'photo_filename' => 'nullable|string|max:255',
@@ -87,13 +87,11 @@ class UserController extends Controller
                 'sometimes',
                 'email',
                 'max:255',
-                Rule::unique('users')->ignore($user->id)
+                Rule::unique('users')->ignore($request->user()->id)
             ],
-            'password' => 'sometimes|string|min:8',
-            'type' => 'sometimes|in:A,P',
+            'password' => 'sometimes|string|min:3',
             'nickname' => 'nullable|string|max:20',
             'photo_filename' => 'nullable|string|max:255',
-            'blocked' => 'sometimes|boolean',
             'brain_coins_balance' => 'sometimes|integer|min:0',
             'custom' => 'nullable|array',  // Validate JSON as array
         ]);
@@ -104,27 +102,31 @@ class UserController extends Controller
         }
 
         // Update the user
-        $user->update($validated_data);
+        $request->user()->update($validated_data);
 
         // Return the updated user with a 200 OK status
-        return new UserResource($user);
+        return new UserResource($request->user());
     }
 
     /**
      * Soft delete the specified resource from storage.
      * @throws AuthorizationException
      */
-    public function destroyMe(User $user): JsonResponse
+    public function destroyMe(Request $request)
     {
+        $user = $request->user(); // Obtém o utilizador autenticado
+
+        // Aplica a verificação da policy
         $this->authorize('delete', $user);
-        //remove brain coins from user
+
         $user->brain_coins_balance = 0;
-        // Soft delete the user
+
+        // Apaga o utilizador
         $user->delete();
 
-        // Return a success message with a 204 No Content status
-        return response()->json(['message' => 'User deleted successfully'], 204);
+        return response()->json(['message' => 'User deleted successfully'], 200);
     }
+
 
     /**
      * Restore a soft-deleted user.
@@ -165,7 +167,7 @@ class UserController extends Controller
                 'max:255',
                 Rule::unique('users')->ignore($request->user()->id)
             ],
-            'password' => 'sometimes|string|min:8',
+            'password' => 'sometimes|string|min:3',
             'nickname' => 'nullable|string|max:20',
             'photo_filename' => 'nullable|string|max:255',
             'brain_coins_balance' => 'sometimes|integer|min:0',
@@ -182,6 +184,23 @@ class UserController extends Controller
 
         // Return the updated user with a 200 OK status
         return new UserResource($request->user());
+    }
+
+    public function uploadAvatar(Request $request)
+    {
+        // Validação do arquivo enviado
+        $validated = $request->validate([
+            'photo_filename' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Limite de 2MB
+        ]);
+
+        // Se o arquivo for válido, salva-o no diretório desejado
+        $avatar = $request->file('photo_filename');
+        $path = $avatar->store( 'photos','public');
+
+        // Retorna o caminho do arquivo salvo
+        return response()->json([
+            'filename' => basename($path),
+        ]);
     }
 
     public function getTop(Request $request)

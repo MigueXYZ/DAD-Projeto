@@ -2,6 +2,8 @@ import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
 import { useErrorStore } from '@/stores/error'
+import { useToast } from '@/components/ui/toast/use-toast';
+import { ToastAction } from '@/components/ui/toast';
 
 import avatarNoneAssetURL from '@/assets/avatar-none.png'
 import router from "@/router/index.js";
@@ -11,6 +13,9 @@ export const useAuthStore = defineStore('auth', () => {
   const storeError = useErrorStore();
   const user = ref(null);
   const token = ref('');
+  const { toast } = useToast();
+  const notifications = ref(true);
+
   let intervalToRefreshToken = null;
 
   const userId = computed(() => {
@@ -49,12 +54,31 @@ export const useAuthStore = defineStore('auth', () => {
   })
 
   const userPhotoUrl = computed(() => {
-    const photoFile = user.value ? (user.value.photoFileName ?? '') : ''
-    if (photoFile) {
-      return axios.defaults.baseURL.replaceAll('/api', photoFile)
-    }
-    return avatarNoneAssetURL
+    return user.value ? user.value.photo_filename : avatarNoneAssetURL
   })
+
+  const deleteAccount = async () => {
+    storeError.resetMessages()
+    try {
+      await axios.delete('users/me')
+      clearUser()
+      await router.push({name: 'login'})
+      return true
+    } catch (e) {
+      clearUser()
+      storeError.setErrorMessages(
+          e.response.data.message,
+          e.response.data.errors,
+          e.response.status,
+          'Delete Account Error!'
+      )
+      toast({
+        description: e.response.data.message,
+        variant:"destructive",
+      })
+      return false
+    }
+  }
 
   // Clear user and reset token refresh
   const clearUser = () => {
@@ -85,9 +109,16 @@ export const useAuthStore = defineStore('auth', () => {
         e.response.status,
         'Authentication Error!'
       )
+      toast({
+        description: e.response.data.message,
+        variant:"destructive",
+      })
+
       return false
     }
   }
+
+
 
   const logout = async () => {
     storeError.resetMessages()
@@ -185,6 +216,10 @@ export const useAuthStore = defineStore('auth', () => {
     return false
   }
 
+  const setUser = (userData) => {
+    user.value = userData;
+  }
+
   // Login anônimo local
   const anonymousLogin = () => {
     user.value = {
@@ -213,10 +248,13 @@ export const useAuthStore = defineStore('auth', () => {
     userBrainCoins,
     userId,
     isLoggedIn,
+    notifications,
     login,
+    deleteAccount,
     logout,
     refreshToken,
     anonymousLogin,
-    restoreToken
+    setUser,
+    restoreToken,
   }
 })
