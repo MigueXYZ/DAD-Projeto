@@ -26,8 +26,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::delete('/users/me', [UserController::class , 'destroyMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
     Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);
-    Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
+    Route::post('/users/me/brain_coins', [TransactionController::class , 'store']);
+    Route::get('/transactions/me', [TransactionController::class , 'showMe']);
+
 });
+Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
 
 Route::patch('/games/{game}', [GameController::class, 'update']);
 
@@ -37,14 +40,10 @@ Route::post('/auth/login', [AuthController::class, 'login']);
 
 Route::get('/users/top', [UserController::class , 'getTop']);
 
+Route::post('/users', [UserController::class, 'store']);
+
 Route::get('/users/names', [UserController::class, 'getNames']);
 
-
-
-// User Routes
-//Route::resource('users', UserController::class); // For all CRUD actions
-//Route::post('/users/restore/{id}', [UserController::class, 'restore']); // For restoring soft-deleted users
-//Route::post('/login', [UserController::class, 'loginWithRememberToken']);
 
 // Board Routes
 Route::get('/boards', [BoardController::class, 'index']);
@@ -58,17 +57,3 @@ Route::get('/games', [GameController::class, 'index']);
 Route::get('/games/{game}', [GameController::class, 'show']);
 Route::post('/games', [GameController::class, 'store']);
 Route::delete('/games/{game}', [GameController::class, 'destroy']);
-
-// MultiplayerGamesPlayed Routes
-Route::get('/multiplayer-games-played', [MultiplayerGamesPlayedController::class, 'index']);
-Route::get('/multiplayer-games-played/{multiplayerGame}', [MultiplayerGamesPlayedController::class, 'show']);
-Route::post('/multiplayer-games-played', [MultiplayerGamesPlayedController::class, 'store']);
-Route::put('/multiplayer-games-played/{multiplayerGame}', [MultiplayerGamesPlayedController::class, 'update']);
-Route::delete('/multiplayer-games-played/{multiplayerGame}', [MultiplayerGamesPlayedController::class, 'destroy']);
-
-// Transaction Routes
-Route::get('transactions', [TransactionController::class, 'index']);
-Route::post('transactions', [TransactionController::class, 'store']);
-Route::get('transactions/{id}', [TransactionController::class, 'show']);
-Route::put('transactions/{id}', [TransactionController::class, 'update']);
-Route::delete('transactions/{id}', [TransactionController::class, 'destroy']);

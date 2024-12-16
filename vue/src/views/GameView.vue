@@ -114,8 +114,12 @@ const hint = async () => {
 
 
   // Deduct 1 Brain Coin
-  await axios.patch(`/users/me`, {
-    brain_coins_balance: authStore.user.brain_coins_balance - 1,
+  await axios.post(`/users/me/brain_coins`, {
+    user_id: authStore.user.id,
+    transaction_datetime: new Date(),
+    brain_coins: -1,
+    type:'I',
+    game_id: gameStore.game.id,
   });
   const response = await axios.get(`/users/me`);
   authStore.setUser(response.data.data);

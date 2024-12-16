@@ -149,6 +149,13 @@ export const useGameStore = defineStore('game', () => {
                         coins = 1;
                         break;
                 }
+                await axios.post(`/users/me/brain_coins`, {
+                    user_id: authStore.user.id,
+                    transaction_datetime: new Date(),
+                    brain_coins: coins,
+                    type:'I',
+                    game_id: gameStore.game.id,
+                });
                 toast({
                     description: tipo,
                 })

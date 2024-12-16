@@ -111,9 +111,11 @@
       </button>
 
       <div
+          v-if="!isAdmin"
           class="mt-4">
         <label for="confirm-delete" class="block text-sm font-medium text-gray-700">Type "DELETE" to remove your account:</label>
         <input
+
             id="confirm-delete"
             v-model="deleteConfirmation"
             type="text"
@@ -122,6 +124,7 @@
       </div>
 
       <button
+          v-if="!isAdmin"
           @click="deleteAccount"
           :disabled="deleteConfirmation !== 'DELETE'"
           class="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-md shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -280,7 +283,11 @@ const deleteAccount = async () => {
   }
 };
 
+// Check if the user is an admin
+const isAdmin = authStore.user.type === 'A';
+
 onMounted(() => {
+  console.log((authStore.user.type));
   fetchProfile();
 });
 </script>

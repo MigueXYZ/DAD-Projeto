@@ -52,6 +52,11 @@
           Play Anyways
         </button>
       </form>
+      <!-- Register Link -->
+      <div class="mt-4 text-center">
+        <router-link to="/register" class="text-blue-600 hover:underline">Don't have an account? Register here.
+        </router-link>
+      </div>
     </main>
   </div>
 </template>

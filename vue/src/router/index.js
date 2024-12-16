@@ -10,6 +10,9 @@ import GameHistoryView from "@/views/GameHistoryView.vue";
 import ScoreboardView from "@/views/ScoreboardView.vue";
 import TopPlayersView from "@/views/TopPlayersView.vue";
 import ProfileView from "@/views/ProfileView.vue";
+import RegisterView from "@/views/RegisterView.vue";
+import TransactionHistoryView from "@/views/TransactionHistoryView.vue";
+import BuyGameCoinsView from "@/views/BuyGameCoinsView.vue";
 import {useAuthStore} from "@/stores/auth.js";
 import {useGameStore} from "@/stores/game.js";
 
@@ -28,6 +31,9 @@ const router = createRouter({
     { path: '/scoreboard', component: ScoreboardView, name: 'scoreboard'},
     { path: '/top-players', component: TopPlayersView, name: 'top-players'},
     { path: '/profile', component: ProfileView, name: 'profile'},
+    { path: '/register', component: RegisterView, name: 'register' },
+    { path: '/transactions/me', component: TransactionHistoryView, name: 'transactions' },
+    { path: '/buy-coins', component: BuyGameCoinsView, name: 'buy-coins' },
     {
       path: '/testers',
       children: [
