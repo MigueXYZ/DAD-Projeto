@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);
     Route::post('/users/me/brain_coins', [TransactionController::class , 'store']);
     Route::get('/transactions/me', [TransactionController::class , 'showMe']);
+    Route::post('/transactions', [TransactionController::class , 'store']);
 
 });
 Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);

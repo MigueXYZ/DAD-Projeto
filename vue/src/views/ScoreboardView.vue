@@ -27,7 +27,7 @@
 
       <!-- Botão de Personal Scoreboard -->
       <button
-          v-if="authStore.isLoggedIn"
+          v-if="authStore.isLoggedIn && !authStore.isAdmin"
           @click="toggleScoreboard" class="bg-green-500 rounded-md text-white px-4 py-2 w-full md:w-auto">
         Toggle {{ stype }}
       </button>

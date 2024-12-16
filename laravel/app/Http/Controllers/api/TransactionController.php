@@ -42,18 +42,6 @@ class TransactionController extends Controller
             }
         }
 
-
-        // If type is 'P', validate payment reference
-        if ($validatedData['type'] === 'P') {
-            if ($validatedData['payment_type']) {
-                $this->validateReference($validatedData['payment_type'], $validatedData['payment_reference']);
-
-                if ($validatedData['euros'] === null) {
-                    return response()->json(['message' => 'Euros must be provided'], 400);
-                }
-            }
-        }
-
         // Check if the user has enough brain coins
         $user = User::findOrFail($validatedData['user_id']);
         $temp = $user->brain_coins_balance + $validatedData['brain_coins'];
@@ -72,50 +60,6 @@ class TransactionController extends Controller
         return response()->json($transaction, 201);
     }
 
-    private function validateReference($type, $reference)
-    {
-        switch ($type) {
-            case 'MBWAY':
-                if (!preg_match('/^9\d{8}$/', $reference)) {
-                    throw ValidationException::withMessages([
-                        'payment_reference' => 'MBWAY reference must be 9 digits starting with 9.',
-                    ]);
-                }
-                break;
-            case 'PAYPAL':
-                if (!filter_var($reference, FILTER_VALIDATE_EMAIL)) {
-                    throw ValidationException::withMessages([
-                        'payment_reference' => 'PAYPAL reference must be a valid email address.',
-                    ]);
-                }
-                break;
-            case 'IBAN':
-                if (!preg_match('/^[A-Z]{2}\d{23}$/', $reference)) {
-                    throw ValidationException::withMessages([
-                        'payment_reference' => 'IBAN reference must start with 2 letters followed by 23 digits.',
-                    ]);
-                }
-                break;
-            case 'MB':
-                if (!preg_match('/^\d{5}-\d{9}$/', $reference)) {
-                    throw ValidationException::withMessages([
-                        'payment_reference' => 'MB reference must follow the pattern: XXXXX-XXXXXXXXX.',
-                    ]);
-                }
-                break;
-            case 'VISA':
-                if (!preg_match('/^4\d{15}$/', $reference)) {
-                    throw ValidationException::withMessages([
-                        'payment_reference' => 'VISA reference must be 16 digits starting with 4.',
-                    ]);
-                }
-                break;
-            default:
-                throw ValidationException::withMessages([
-                    'payment_reference' => 'Invalid payment type or missing payment reference.',
-                ]);
-        }
-    }
 
     public function show($id)
     {

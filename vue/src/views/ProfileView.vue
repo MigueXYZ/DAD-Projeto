@@ -284,7 +284,7 @@ const deleteAccount = async () => {
 };
 
 // Check if the user is an admin
-const isAdmin = authStore.user.type === 'A';
+const isAdmin = authStore.isAdmin;
 
 onMounted(() => {
   console.log((authStore.user.type));

@@ -19,6 +19,7 @@
 
           <div class="mt-4 grid grid-cols-1">
             <button
+                v-if="!authStore.isAdmin"
                 @click="startGame"
                 class="w-auto lg:w-full py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-md  transition duration-200 my-2"
             >
@@ -34,9 +35,9 @@
               -->
           </div>
           <div
-              :class=" authStore.isLoggedIn ? 'grid grid-cols-2 gap-x-4' : 'grid grid-cols-1 gap-x-4'">
+              :class=" authStore.isLoggedIn && !authStore.isAdmin ? 'grid grid-cols-2 gap-x-4' : 'grid grid-cols-1 gap-x-4'">
             <button
-                v-if="authStore.isLoggedIn"
+                v-if="authStore.isLoggedIn && !authStore.isAdmin"
                 @click="gameHistory"
                 class="w-auto lg:w-full py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-md  transition duration-200 my-2"
             >

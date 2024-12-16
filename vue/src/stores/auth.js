@@ -237,6 +237,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   };
 
+  const isAdmin = computed(() => {
+      return user.value ? user.value.type === 'A' : false;
+  });
+
   return {
     user,
     userName,
@@ -249,6 +253,7 @@ export const useAuthStore = defineStore('auth', () => {
     userId,
     isLoggedIn,
     notifications,
+    isAdmin,
     login,
     deleteAccount,
     logout,

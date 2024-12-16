@@ -154,7 +154,7 @@ export const useGameStore = defineStore('game', () => {
                     transaction_datetime: new Date(),
                     brain_coins: coins,
                     type:'I',
-                    game_id: gameStore.game.id,
+                    game_id: game.value.id,
                 });
                 toast({
                     description: tipo,
@@ -197,8 +197,11 @@ export const useGameStore = defineStore('game', () => {
 
     const gameStarted = computed(() => game.value?.began_at);
 
-    const clearGame = () => {
+    const clearGame = async () => {
         if (game.value) {
+            if (authStore.isLoggedIn) {
+                await deleteGame();
+            }
             game.value = null;
             localStorage.removeItem('game');
         }
