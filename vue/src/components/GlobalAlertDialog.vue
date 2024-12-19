@@ -17,8 +17,14 @@ const cancelText = ref('Cancel')
 const actionText = ref('OK')
 const actionCallBack = ref(null)
 const actionCallBack2 = ref(null)
-const open = (actionCallBackFunction, actionCallBackFunction2, title = 'Title', cancelLabel = 'Cancel',
-              actionLabel = 'Continuar', description = '') => {
+const open = (
+    actionCallBackFunction,
+    actionCallBackFunction2,
+    title = 'Title',
+    cancelLabel = 'Cancel',
+    actionLabel = 'Continuar',
+    description = ''
+) => {
   titleText.value = title
   descriptionText.value = description
   cancelText.value = cancelLabel

@@ -28,8 +28,8 @@
         class="grid gap-2 bg-white p-4 rounded shadow w-full max-w-lg"
     >
 
-    
-    
+
+
       <!-- Render each tile dynamically -->
       <div
           v-for="(tile, index) in tiles"
@@ -82,8 +82,8 @@ const home = () => {
 };
 
 const playAgain = () => {
-  router.push('/size')
-
+  gameStore.clearGame();
+  router.push('/size');
 }
 
 const hint = async () => {
@@ -196,7 +196,7 @@ const checkWin = async () => {
   if (allMatched) {
     console.log('You win! All pairs are matched.');
     gameStore.calculateTotalTime();
-    await gameStore.updateGame(); // Update the game data with the total time
+    await gameStore.updateGameDatabase(); // Update the game data with the total time
     winpopUp();
 
   }

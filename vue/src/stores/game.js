@@ -1,16 +1,22 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, inject } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from './auth';
 import { useToast } from '@/components/ui/toast/use-toast';
-import { ToastAction } from '@/components/ui/toast';
+import { useErrorStore } from '@/stores/error';
 
 export const useGameStore = defineStore('game', () => {
     const authStore = useAuthStore();
-    const game = ref(null); // Armazena um único jogo
+    const errorStore = useErrorStore();
     const { toast } = useToast();
+    const socket = inject('socket');
 
-    // Função para validar o formato da data e a data em si
+    const games = ref([]);
+    const game = ref(null);
+
+    const totalGames = computed(() => games.value.length);
+
+    // Function to validate the date format
     const isValidDate = (dateStr) => {
         const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\s([01]\d|2[0-3]):([0-5]\d):([0-5]\d)$/;
         if (!dateRegex.test(dateStr)) {
@@ -32,13 +38,12 @@ export const useGameStore = defineStore('game', () => {
         );
     };
 
+    // Create a new game
     const createGame = async (gameData) => {
         if (!isValidDate(gameData.began_at)) {
-            console.error('Formato de data inválido. Deve ser "YYYY-MM-DD HH:MM:SS".');
+            console.error('Invalid date format. Expected "YYYY-MM-DD HH:MM:SS".');
             return false;
         }
-
-        console.log('userIdValue:', authStore.userId);
 
         const newGame = {
             id: null,
@@ -54,49 +59,45 @@ export const useGameStore = defineStore('game', () => {
             total_turns_winner: null,
         };
 
-        if (authStore.isLoggedIn) {
-            if (authStore.userId) {
-                try {
-                    const response = await axios.post('/games', newGame);
-                    newGame.id = response.data.data.id; // Atualiza o ID com o fornecido pelo servidor
-                    game.value = JSON.parse(JSON.stringify(newGame));
-                    console.log("GAME", game.value);
-                    console.log('Storing game:', JSON.stringify(game.value));
-                    localStorage.setItem('game', JSON.stringify(game.value));
-                    return true;
-                } catch (error) {
-                    console.error('Erro ao criar jogo:', error.response?.data?.message || error.message);
-                    return false;
-                }
-            }
-        } else {
-            try {
-                // Set newGame.id and assign to game.value before storing
-                newGame.id = 0; // A placeholder ID
-                game.value = JSON.parse(JSON.stringify(newGame)); // Properly set the game value
-                console.log("GAME (offline)", game.value);
-                localStorage.setItem('game', JSON.stringify(game.value)); // Now this won't break
-                return true;
-            } catch (error) {
-                console.error('Erro ao criar jogo:', error.message);
-                return false;
-            }
+        try {
+            const response = await axios.post('/games', newGame);
+            newGame.id = response.data.data.id;
+            game.value = JSON.parse(JSON.stringify(newGame));
+            games.value.push(newGame);
+            localStorage.setItem('game', JSON.stringify(game.value));
+            return true;
+        } catch (error) {
+            console.error('Error creating game:', error.response?.data?.message || error.message);
+            return false;
         }
+    };
 
+    const updateGame = (updatedGame) => {
+        const index = games.value.findIndex((g) => g.id === updatedGame.id);
+        if (index !== -1) {
+            games.value[index] = { ...updatedGame };
+        }
+    };
+
+    const fetchPlayingGames = () => {
+        errorStore.resetMessages();
+        socket.emit('fetchPlayingGames', (response) => {
+            if (response.errorCode) {
+                errorStore.setErrorMessages(response.errorMessage, [], response.errorCode);
+                return;
+            }
+            games.value = response;
+        });
     };
 
     const calculateTotalTime = () => {
         const now = new Date();
         const beganAt = new Date(game.value.began_at);
-        const diff = now - beganAt; // Diferença em milissegundos
-
-        // Transformar milissegundos em segundos e formatar para duas casas decimais
+        const diff = now - beganAt;
         const seconds = (diff / 1000).toFixed(2);
-
-        game.value.total_time = parseFloat(seconds); // Garantir que seja um número float
-        game.value.ended_at = getFormattedDate(); // Função para formatar a data de encerramento
+        game.value.total_time = parseFloat(seconds);
+        game.value.ended_at = getFormattedDate();
     };
-
 
     const getFormattedDate = () => {
         const now = new Date();
@@ -106,24 +107,125 @@ export const useGameStore = defineStore('game', () => {
         const hours = String(now.getHours()).padStart(2, '0');
         const minutes = String(now.getMinutes()).padStart(2, '0');
         const seconds = String(now.getSeconds()).padStart(2, '0');
-        const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;  // Ajuste no formato aqui
-        return formattedDate;
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
+
+    const play = (game, idx1, idx2) => {
+        errorStore.resetMessages();
+        socket.emit('play', { index1: idx1, index2:idx2, gameId: game.id }, (response) => {
+            if (response.errorCode) {
+                errorStore.setErrorMessages(response.errorMessage, [], response.errorCode);
+                return;
+            }
+            updateGame(response);
+        });
+    };
+
+    const quit = (game) => {
+        errorStore.resetMessages();
+        socket.emit('quitGame', game.id, (response) => {
+            if (response.errorCode) {
+                errorStore.setErrorMessages(response.errorMessage, [], response.errorCode);
+                toast({
+                    title: 'Error quitting game',
+                    description: response.errorMessage,
+                    variant: 'destructive',
+                })
+                return;
+            }
+            games.value = games.value.filter((g) => g.id !== game.id);
+        });
+    };
+
+    const deleteGame = async () => {
+        if (!game.value) {
+            console.warn('No game to delete.');
+            return false;
+        }
+        try {
+            await axios.delete(`/games/${game.value.id}`);
+            games.value = games.value.filter((g) => g.id !== game.value.id);
+            game.value = null;
+            localStorage.removeItem('game');
+            return true;
+        } catch (error) {
+            console.error('Error deleting game:', error.response?.data?.message || error.message);
+            return false;
+        }
+    };
+
+    socket.on('gameStarted', (newGame) => {
+        console.log('Game started:', newGame);
+        games.value.push(newGame);
+        toast({
+            title: 'Game Started',
+            description: `Game #${newGame.id} has started!`,
+        });
+    });
+
+    socket.on('gameEnded', (endedGame) => {
+        updateGame(endedGame);
+        toast({
+            title: 'Game Ended',
+            description: `Game #${endedGame.id} has ended!`,
+        });
+    });
+
+    socket.on('gameChanged', (changedGame) => {
+        updateGame(changedGame);
+    });
+
+    const restoreGame = async function() {
+        let storedGame = localStorage.getItem('game');
+        if(storedGame){
+            try{
+                game.value = JSON.parse(storedGame);
+                return true
+            }
+            catch{
+                clearGame()
+                return false
+            }
+        }
     }
 
-    //Update game
-    const updateGame = async () => {
-        // Atualiza o status do jogo
-        game.value.status = 'E';
-        console.log('Update '+ game.value);
-
-        try {
-            // Verifica se o ID do jogo está presente
-            if (!game.value.id) {
-                console.error('ID do jogo não encontrado');
-                return false;
+    const clearGame = function(){
+        //if logged in, delete from server
+        if(authStore.isLoggedIn){
+            try{
+                if(game.value && game.value.status === 'P'){
+                    axios.delete(`/games/${game.value.id}`)
+                        .catch(error => {
+                            console.error('Error deleting game:', error.response?.data?.message || error.message);
+                            toast({
+                                title: 'Error',
+                                description: 'An error occurred while deleting the game.',
+                                variant:'destructive',
+                            })
+                        })
+                }
+            }catch (error) {
+                console.error('Error deleting game:', error.response?.data?.message || error.message);
+                toast({
+                    title: 'Error',
+                    description: 'An error occurred while deleting the game.',
+                    variant: 'destructive',
+                })
             }
+        }
+        game.value = null
+        localStorage.removeItem('game')
+    }
 
-            // Envia a requisição PUT para atualizar o jogo
+    const updateGameDatabase = async function(){
+        if(!game.value){
+            console.warn('No game to update.');
+            return false;
+        }
+        try{
+            game.value.status='E'
+            console.log('Update:'+game.value)
+
             await axios.patch(`/games/${game.value.id}`, game.value);
 
             const {data} = await axios.get(`/games/record/${game.value.id}`);
@@ -149,7 +251,8 @@ export const useGameStore = defineStore('game', () => {
                         coins = 1;
                         break;
                 }
-                await axios.post(`/users/me/brain_coins`, {
+                console.log('Id do player: '+authStore.user.id);
+                await axios.post('/users/me/brain_coins', {
                     user_id: authStore.user.id,
                     transaction_datetime: new Date(),
                     brain_coins: coins,
@@ -165,71 +268,79 @@ export const useGameStore = defineStore('game', () => {
 
             }
 
-            // Retorna verdadeiro se a atualização for bem-sucedida
             return true;
-        } catch (error) {
-            // Exibe mensagem de erro, se houver
-            console.error('Erro ao atualizar jogo:', error.response?.data?.message || error.message);
-            return false;
         }
-    };
-
-
-
-    // Função para remover o jogo
-    const deleteGame = async () => {
-        if (!game.value) {
-            console.warn('Nenhum jogo encontrado para excluir.');
+        catch(error){
+            console.error('Error updating game:', error.response?.data?.message || error.message);
             return false;
-        }
-
-        try {
-            if (authStore.isLoggedIn) {
-                await axios.delete(`/games/${game.value.id}`);
-            }
-            clearGame();
-            return true;
-        } catch (error) {
-            console.error('Erro ao remover jogo:', error.response?.data?.message || error.message);
-            return false;
-        }
-    };
-
-    const gameStarted = computed(() => game.value?.began_at);
-
-    const clearGame = async () => {
-        if (game.value) {
-            if (authStore.isLoggedIn) {
-                await deleteGame();
-            }
-            game.value = null;
-            localStorage.removeItem('game');
         }
     }
 
-    const restoreGame = async function() {
-        let storedGame = localStorage.getItem('game');
-        if(storedGame){
-            try{
-                game.value = JSON.parse(storedGame);
-                return true
+    const playerNumberOfCurrentUser = (gam) => {
+        console.log('PlayerNumberOfCurrentUser:', authStore.userId)
+        if (gam.player1?.id === authStore.userId) {
+            return 1
+        }
+        if (gam.player2?.id === authStore.userId) {
+            return 2
+        }
+        return null
+    }
+    const webSocketServerResponseHasError = (response) => {
+        if (response.errorCode) {
+            errorStore.setErrorMessages(response.errorMessage, [], response.errorCode)
+            return true
+        }
+        return false
+    }
+
+    const close = (game) => {
+        errorStore.resetMessages()
+        socket.emit('closeGame', game.id, (response) => {
+            if (webSocketServerResponseHasError(response)) {
+                return
             }
-            catch{
-                clearGame()
-                return false
-            }
+            removeGameFromList(game)
+        })
+    }
+
+    const removeGameFromList = (game) => {
+        games.value = games.value.filter((g) => g.id !== game.id)
+    }
+
+    const setGames = (newGames) => {
+        games.value = newGames
+    }
+
+    const fetchGame = async (id) => {
+        errorStore.resetMessages()
+        try {
+            const { data } = await axios.get(`/games/${id}`)
+            return data.data
+        } catch (error) {
+            console.error('Error fetching game:', error.response?.data?.message || error.message)
+            return null
         }
     }
 
     return {
         game,
-        gameStarted,
-        calculateTotalTime,
-        getFormattedDate,
+        games,
+        totalGames,
         createGame,
+        setGames,
         clearGame,
         updateGame,
-        restoreGame,
         deleteGame,
+        fetchPlayingGames,
+        updateGameDatabase,
+        calculateTotalTime,
+        getFormattedDate,
+        restoreGame,
+        playerNumberOfCurrentUser,
+        fetchGame,
+        play,
+        close,
+        quit,
     };
 });

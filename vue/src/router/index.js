@@ -13,6 +13,7 @@ import ProfileView from "@/views/ProfileView.vue";
 import RegisterView from "@/views/RegisterView.vue";
 import TransactionHistoryView from "@/views/TransactionHistoryView.vue";
 import BuyGameCoinsView from "@/views/BuyGameCoinsView.vue";
+import MultiPlayerGames from "@/components/multiplayer/MultiPlayerGames.vue";
 import {useAuthStore} from "@/stores/auth.js";
 import {useGameStore} from "@/stores/game.js";
 
@@ -34,6 +35,7 @@ const router = createRouter({
     { path: '/register', component: RegisterView, name: 'register' },
     { path: '/transactions/me', component: TransactionHistoryView, name: 'transactions' },
     { path: '/buy-coins', component: BuyGameCoinsView, name: 'buy-coins' },
+    { path: '/multiplayer', component: MultiPlayerGames, name: 'multiplayer' },
     {
       path: '/testers',
       children: [
@@ -68,15 +70,19 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Check if user is logged in and trying to access protected routes
-  const protectedRoutes = ['updateProject', 'history', 'profile']; // Example routes that need authentication
+  const protectedRoutes = ['history', 'profile', 'multiplayer']; // Example routes that need authentication
+  const notAdminRoutes = ['size','game','multiplayer'];
+
+  if (notAdminRoutes.includes(to.name) && storeAuth.isAdmin) {
+    // If the user is an admin, redirect to dashboard
+    next({ name: 'dashboard' });
+  }
 
   if (protectedRoutes.includes(to.name) && !storeAuth.isLoggedIn) {
     // If the user is not logged in, redirect to login page
     next({ name: 'login' });
-  } else {
-    // Otherwise, allow the navigation
-    next();
   }
+  next();
 });
 
 

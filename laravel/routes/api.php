@@ -29,7 +29,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/users/me/brain_coins', [TransactionController::class , 'store']);
     Route::get('/transactions/me', [TransactionController::class , 'showMe']);
     Route::post('/transactions', [TransactionController::class , 'store']);
-
+    Route::post('/games/{game}/players', [GameController::class , 'storeMultiplayerGame']);
 });
 Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
 
@@ -49,9 +49,6 @@ Route::get('/users/names', [UserController::class, 'getNames']);
 // Board Routes
 Route::get('/boards', [BoardController::class, 'index']);
 Route::get('/boards/{board}', [BoardController::class, 'show']);
-Route::post('/boards', [BoardController::class, 'store']);
-Route::put('/boards/{board}', [BoardController::class, 'update']);
-Route::delete('/boards/{board}', [BoardController::class, 'destroy']);
 
 // Game Routes
 Route::get('/games', [GameController::class, 'index']);

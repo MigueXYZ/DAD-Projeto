@@ -25,14 +25,13 @@
             >
               Play SinglePlayer
             </button>
-            <!-- TODO v-if dad
               <button
-                @click="startGame"
+                v-if="authStore.isLoggedIn && !authStore.isAdmin && authStore.user.brain_coins_balance > 5"
+                @click="goToMultiplayer"
                 class="w-auto lg:w-full py-3  bg-blue-700 text-white rounded-md hover:bg-blue-600 transition duration-200"
               >
                 Join Lobby
               </button>
-              -->
           </div>
           <div
               :class=" authStore.isLoggedIn && !authStore.isAdmin ? 'grid grid-cols-2 gap-x-4' : 'grid grid-cols-1 gap-x-4'">
@@ -123,6 +122,10 @@ const gameHistory = () => {
 const scoreboard = () => {
   router.push('/scoreboard')
 }
+
+const goToMultiplayer = () => {
+  router.push('/multiplayer');
+};
 
 // Logout the user
 const logout = async () => {

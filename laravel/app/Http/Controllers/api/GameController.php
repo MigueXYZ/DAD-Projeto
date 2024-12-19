@@ -245,5 +245,38 @@ class GameController extends Controller
         return GameResource::collection($games);
     }
 
+    public function storeMultiplayerGame(Game $game, Request $request)
+    {
+        //check if game is multiplayer
+        if($game->type !== 'M'){
+            return response()->json(['error' => 'This game is not multiplayer'], 400);
+        }
+
+        //check if player1_id exists
+        $player1_id = $request->input('player1_id');
+        $player1 = User::find($player1_id);
+        if(!$player1){
+            return response()->json(['error' => 'Player 1 not found'], 404);
+        }
+
+        //check if player2_id exists
+        $player2_id = $request->input('player2_id');
+        $player2 = User::find($player2_id);
+        if(!$player2){
+            return response()->json(['error' => 'Player 2 not found'], 404);
+        }
+
+        //create a new multiplayer game played record for player1
+        $game->multiplayerGamesPlayed()->create([
+            'user_id' => $player1_id,
+            'game_id' => $game->id,
+        ]);
+
+        //create a new multiplayer game played record for player2
+        $game->multiplayerGamesPlayed()->create([
+            'user_id' => $player2_id,
+            'game_id' => $game->id,
+        ]);
+    }
 
 }

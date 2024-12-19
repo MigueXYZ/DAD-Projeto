@@ -12,6 +12,8 @@ class MultiplayerGamesPlayed extends Model
 {
     use HasFactory;
 
+    protected $table = 'multiplayer_games_played';
+
     public $timestamps = false;
 
     /*
