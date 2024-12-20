@@ -23,8 +23,8 @@ const alertDialog = inject('alertDialog')
 // Computed Properties
 const opponentName = computed(() => {
   return storeGames.playerNumberOfCurrentUser(props.game) === 1
-      ? storeAuth.getFirstLastName(props.game.player2_name)
-      : storeAuth.getFirstLastName(props.game.player1_name)
+      ? storeAuth.getFirstLastName(props.game.player2.nickname)
+      : storeAuth.getFirstLastName(props.game.player1.nickname)
 })
 
 const gameEnded = computed(() => props.game.gameStatus > 0)

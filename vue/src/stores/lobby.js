@@ -49,8 +49,9 @@ export const useLobbyStore = defineStore('lobby', () => {
     // add a game to the lobby
     const addGame = async (board) => {
         storeError.resetMessages()
-
         loading.value = true
+
+        console.log('add game:', board)
 
         let newGame = {
             id: null,
@@ -65,44 +66,65 @@ export const useLobbyStore = defineStore('lobby', () => {
             custom: null,
             total_turns_winner: null,
         }
-            // Add the game to the DB
-            const success = await  gameStore.createGame(newGame)
 
-            if (!success) {
-                toast({
-                    description: 'Error creating game!',
-                    variant: "destructive",
-                })
-            }
+        // Add the game to the DB
+        const success = await gameStore.createGame(newGame)
 
-            //update the game with the new id
-            newGame.id = gameStore.game.id
-
-            games.value.push(newGame)
-            // Add a transaction to the user's brain_coins
-            await axios.post(`/users/me/brain_coins`, {
-                user_id: authStore.user.id,
-                transaction_datetime: new Date(),
-                brain_coins: -5,
-                type: 'I',
-                game_id: gameStore.game.id,
-            })
-
+        if (!success) {
             toast({
-                description: 'Game created! 5 brain_coins deducted!',
+                description: 'Error creating game!',
+                variant: "destructive",
             })
+            loading.value = false
+            return
+        }
 
-            const board_size = board.board_cols * board.board_rows
-            // Send the game to the server
-            socket.emit('addGame', newGame.id, board_size, (response) => {
-                if (response && response.errorCode) {
-                    console.error('Error from server:', response.errorMessage)
-                    storeError.setErrorMessages(response.errorMessage, [], response.errorCode)
-                } else {
-                    console.log('Game added successfully:', response)
-                }
-            })
+        // Update the game with the new id
+        newGame.id = gameStore.game.id
+
+        games.value.push(newGame)
+
+        console.log('board:', board)
+
+        const board_size = board.board_cols * board.board_rows
+
+        console.log('board size:', board_size)
+
+        // Add a transaction to the user's brain_coins
+        await axios.post(`/users/me/brain_coins`, {
+            user_id: authStore.user.id,
+            transaction_datetime: new Date(),
+            brain_coins: -5,
+            type: 'I',
+            game_id: gameStore.game.id,
+        })
+
+        toast({
+            description: 'Game created! 5 brain_coins deducted!',
+        })
+
+        // if socket is not connected, return
+        if (!socket.connected) {
+            console.error('Socket is not connected')
+        }
+
+        console.log('new game:', newGame.id)
+
+        // Send the game to the server
+        socket.emit('addGame', newGame.id, board_size, (response) => {
+            if (response && response.errorCode) {
+                console.error('Error from server:', response.errorMessage)
+                storeError.setErrorMessages(response.errorMessage, [], response.errorCode)
+            } else {
+                console.log('Game added successfully:', response)
+            }
+        })
+
+        console.log('game added:', newGame)
+
+        loading.value = false
     }
+
 
 
     // remove a game from the lobby
@@ -125,6 +147,7 @@ export const useLobbyStore = defineStore('lobby', () => {
             toast({
                 description: 'Game removed! 5 brain_coins added!',
             });
+            gameStore.fetchPlayingGames();
         })
     }
 

@@ -162,11 +162,11 @@ io.on("connection", (socket) => {
   })
 
   socket.on('removeGame', (id, callback) => {
+    console.log('removeGame', id)
     if (!util.checkAuthenticatedUser(socket, callback)) {
       return
     }
     const game = lobby.getGame(id)
-
     if (!game) {
       console.error(`Game with ID ${id} not found`);
       callback({ errorCode: 404, errorMessage: 'Game not found' });

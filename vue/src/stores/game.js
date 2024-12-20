@@ -86,6 +86,7 @@ export const useGameStore = defineStore('game', () => {
                 errorStore.setErrorMessages(response.errorMessage, [], response.errorCode);
                 return;
             }
+            console.log('fetchPlayingGames response:', response);
             games.value = response;
         });
     };
@@ -156,11 +157,12 @@ export const useGameStore = defineStore('game', () => {
 
     socket.on('gameStarted', (newGame) => {
         console.log('Game started:', newGame);
-        games.value.push(newGame);
+        fetchPlayingGames();
         toast({
             title: 'Game Started',
             description: `Game #${newGame.id} has started!`,
         });
+
     });
 
     socket.on('gameEnded', (endedGame) => {

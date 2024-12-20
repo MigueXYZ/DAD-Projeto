@@ -8,20 +8,13 @@
     <div
         v-for="(cell, index) in totalCells"
         :key="index"
-        class="relative w-20 h-20 bg-gray-300 rounded-md"
+        class="relative card bg-white shadow-lg rounded-lg cursor-pointer"
         @click="handleCardClick(index)"
     >
       <div
-          v-if="isCardRevealed(index)"
-          class="absolute inset-0 flex items-center justify-center text-xl font-bold"
+          class="absolute inset-0 flex items-center justify-center h-full w-full p-1"
       >
-        {{ getCardValue(index) }}
-      </div>
-      <div
-          v-else
-          class="absolute inset-0 flex items-center justify-center bg-slate-800 text-white opacity-75 rounded-md"
-      >
-        ?
+        <img :src="getCardImage(index)" class="w-full h-full object-cover rounded-lg" />
       </div>
     </div>
   </div>
@@ -31,6 +24,9 @@
 <script setup>
 import {ref, computed, onMounted} from 'vue'
 import axios from 'axios'
+import {useToast} from '@/components/ui/toast/use-toast'
+
+const {toast} = useToast()
 
 // Props
 const props = defineProps({
@@ -67,41 +63,56 @@ const isCardRevealed = (index) => {
   return props.game.revealedCards.includes(index)
 }
 
-// Get the card value by index
-const getCardValue = (index) => {
-  // Update this logic as needed to get the correct card value
-  return props.game.board[index]
+// Get the image URL for the card
+const getCardImage = (index) => {
+  const card = props.game.board[index] // Assuming board is an array of cards with 'image' property
+  if (isCardRevealed(index)) {
+    // Return the image URL for the revealed card
+    return new URL(`../../assets/Tiles/cards/${card.image}`, import.meta.url).href
+  }
+  // Return the back face of the card (default image when hidden)
+  return new URL('../../assets/Tiles/cards/0.png', import.meta.url).href
 }
 
 // Handle card click
 const handleCardClick = (index) => {
   if (!isCardRevealed(index)) {
-    emit('playPieceOfBoard', index)
+    // Emit event or handle card flip
+    // emit('playPieceOfBoard', index)
+    toast({
+      title: 'Card clicked, not implemented',
+    })
   }
 }
+
 </script>
 
 <style scoped>
 .grid {
   display: grid;
   gap: 1rem;
+  padding: 1rem;
 }
 
 .card {
   position: relative;
-  width: 5rem;
-  height: 5rem;
-  background-color: #f0f0f0;
+  width: 6rem; /* Width of the card */
+  height: 9rem; /* Height of the card */
+  background-color: white;
   border-radius: 0.5rem;
   cursor: pointer;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: scale(1.05); /* Slight scale effect when hovered */
 }
 
 .card-revealed {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
 }
 
 .card-hidden {
@@ -111,6 +122,10 @@ const handleCardClick = (index) => {
   background-color: #333;
   color: white;
   opacity: 0.75;
+  border-radius: 0.5rem;
+}
+
+.card img {
   border-radius: 0.5rem;
 }
 </style>

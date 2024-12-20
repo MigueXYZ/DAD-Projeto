@@ -24,6 +24,7 @@ const isDialogOpen = ref(false)  // Controls if the dialog is open
 const addGame = async () => {
   const response = await axios.get('/boards')
   boards.value = response.data.data
+  console.log('boards', boards.value)
   await storeLobby.addGame(boards.value[0]);
 }
 
@@ -48,7 +49,6 @@ onMounted(() => {
         </Button>
       </div>
       <div v-if="storeLobby.totalGames > 0">
-        <span>Eu estou a ficar maluco</span>
         <ListGamesLobby/>
       </div>
       <div v-else>
