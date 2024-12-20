@@ -196,7 +196,7 @@ const checkWin = async () => {
   if (allMatched) {
     console.log('You win! All pairs are matched.');
     gameStore.calculateTotalTime();
-    await gameStore.updateGameDatabase(); // Update the game data with the total time
+    await gameStore.updateGameDatabase(gameStore.game.value); // Update the game data with the total time
     winpopUp();
 
   }

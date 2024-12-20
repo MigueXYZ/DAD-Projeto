@@ -170,9 +170,49 @@ export const useGameStore = defineStore('game', () => {
 
     });
 
-    socket.on('gameEnded', (endedGame) => {
+    socket.on('gameEnded', async (endedGame) => {
         console.log('Game ended:', endedGame);
-        updateGame(endedGame);
+        if (endedGame.gameStatus === 1) {
+            endedGame.winner_user_id = endedGame.player1.id;
+            endedGame.total_turns_winner=endedGame.totalTurns.p1;
+        } else if (endedGame.gameStatus === 2) {
+            endedGame.winner_user_id = endedGame.player2.id;
+            endedGame.total_turns_winner = endedGame.totalTurns.p2;
+        }
+
+        if (endedGame.winner_user_id !== null) {
+            let score = 0;
+            if(endedGame.winner_user_id===endedGame.player1.id){
+                score=endedGame.totalPairs.p1
+            }else if(endedGame.winner_user_id===endedGame.player2.id){
+                score=endedGame.totalPairs.p2
+            }
+
+            const data={
+                user_id: authStore.userId,
+                game_id: endedGame.id,
+                player_won: endedGame.winner_user_id===authStore.userId?1:0,
+                pairs_discovered: score,
+            }
+
+            await axios.patch('/multiplayer-games', data);
+        }
+
+        if(endedGame.winner_user_id === authStore.userId){
+            await axios.post('/users/me/brain_coins', {
+                user_id: authStore.userId,
+                transaction_datetime: new Date(),
+                brain_coins: 7,
+                type:'I',
+                game_id: endedGame.id,
+            });
+        }
+
+        //await updateGameDatabase();
+        //copy endedGame and updateGameDatabase(copy)
+
+        await updateGameDatabase(endedGame);
+
         toast({
             title: 'Game Ended',
             description: `Game #${endedGame.id} has ended!`,
@@ -225,18 +265,14 @@ export const useGameStore = defineStore('game', () => {
         localStorage.removeItem('game')
     }
 
-    const updateGameDatabase = async function(){
-        if(!game.value){
-            console.warn('No game to update.');
-            return false;
-        }
+    const updateGameDatabase = async function(gameF){
         try{
-            game.value.status='E'
-            console.log('Update:'+game.value)
+            gameF.status='E'
+            console.log('Update:'+gameF)
 
-            await axios.patch(`/games/${game.value.id}`, game.value);
+            await axios.patch(`/games/${gameF.id}`, gameF);
 
-            const {data} = await axios.get(`/games/record/${game.value.id}`);
+            const {data} = await axios.get(`/games/record/${gameF.id}`);
             console.log(data);
             if (data > 0){
                 let tipo;
@@ -265,7 +301,7 @@ export const useGameStore = defineStore('game', () => {
                     transaction_datetime: new Date(),
                     brain_coins: coins,
                     type:'I',
-                    game_id: game.value.id,
+                    game_id: gameF.id,
                 });
                 toast({
                     description: tipo,
@@ -273,9 +309,7 @@ export const useGameStore = defineStore('game', () => {
                 toast({
                     description: 'Você ganhou '+ coins + ' moedas!',
                 })
-
             }
-
             return true;
         }
         catch(error){

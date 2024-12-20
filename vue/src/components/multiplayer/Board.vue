@@ -63,14 +63,14 @@ const totalCells = computed(() => {
 
 // Check if a card is revealed
 const isCardRevealed = (index) => {
-  // check if the reavleaded cards array has a number not equal to -1 in the index
+  // check if the revealed cards array has a number not equal to -1 in the index
   return props.game.revealedCards[index] !== -1
 }
 
 // Get the image URL for the card
 const getCardImage = (index) => {
   const card = props.game.revealedCards[index] // Assuming board is an array of cards with 'image' property
-  console.log('Card:', card)
+  //console.log('Card:', card)
   if (isCardRevealed(index)) {
     // Return the image URL for the revealed card
     return new URL(`../../assets/Tiles/cards/${card}.png`, import.meta.url).href

@@ -8,6 +8,7 @@ exports.createGameEngine = () => {
         // 3 -> draw
         gameFromDB.currentPlayer = 1;
         gameFromDB.totalPairs = { p1: 0, p2: 0 };
+        gameFromDB.totalTurns = { p1: 0, p2: 0 };
         gameFromDB.turns = 0;
         gameFromDB.board = generateShuffledBoard(gameFromDB.board_size);
         gameFromDB.revealedCards = []; // Stores indices of currently revealed cards
@@ -129,6 +130,11 @@ exports.createGameEngine = () => {
         }
 
         if(game.board[game.lastPlayedCard] !== game.board[cardIndex]){
+            if(game.currentPlayer===1){
+                game.totalTurns.p1+=1;
+            }else{
+                game.totalTurns.p2+=1;
+            }
             game.locked=1;
             await delay(2000);
             game.locked=0;
@@ -141,7 +147,18 @@ exports.createGameEngine = () => {
         }
 
         if(game.board[game.lastPlayedCard] === game.board[cardIndex]){
-            game.totalPairs[game.currentPlayer]++;
+            if(game.currentPlayer===1){
+                game.totalTurns.p1+=1;
+            }else{
+                game.totalTurns.p2+=1;
+            }
+
+            if(game.currentPlayer===1){
+                game.totalPairs.p1 +=1;
+            }else{
+                game.totalPairs.p2 +=1;
+            }
+
             game.lastPlayedCard = null;
 
             //Do not change player, they get to keep playing

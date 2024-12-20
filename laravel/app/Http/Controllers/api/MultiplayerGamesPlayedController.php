@@ -79,4 +79,24 @@ class MultiplayerGamesPlayedController extends Controller
 
         return response()->json(['message' => 'Multiplayer game record deleted successfully'], 204); // 204 No Content
     }
+
+    public function updateIt(Request $request)
+    {
+        // Obter o registro que corresponde aos critérios
+        $multiplayerGamePlayed = MultiplayerGamesPlayed::where('user_id', $request->user_id)
+            ->where('game_id', $request->game_id)
+            ->first();
+
+        // Verificar se o registro existe
+        if (!$multiplayerGamePlayed) {
+            return response()->json(['error' => 'Registro não encontrado'], 404);
+        }
+
+        // Atualizar o registro com os dados recebidos
+        $multiplayerGamePlayed->update($request->only(['player_won', 'pairs_discovered']));
+
+        // Retornar o recurso atualizado
+        return new MultiplayerGamesPlayedResource($multiplayerGamePlayed);
+    }
+
 }
