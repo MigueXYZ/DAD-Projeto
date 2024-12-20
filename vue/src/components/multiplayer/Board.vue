@@ -28,6 +28,9 @@ import {useToast} from '@/components/ui/toast/use-toast'
 
 const {toast} = useToast()
 
+// Defina os eventos que o componente pode emitir
+const emit = defineEmits(['playPieceOfBoard']);
+
 // Props
 const props = defineProps({
   game: {
@@ -60,15 +63,17 @@ const totalCells = computed(() => {
 
 // Check if a card is revealed
 const isCardRevealed = (index) => {
-  return props.game.revealedCards.includes(index)
+  // check if the reavleaded cards array has a number not equal to -1 in the index
+  return props.game.revealedCards[index] !== -1
 }
 
 // Get the image URL for the card
 const getCardImage = (index) => {
-  const card = props.game.board[index] // Assuming board is an array of cards with 'image' property
+  const card = props.game.revealedCards[index] // Assuming board is an array of cards with 'image' property
+  console.log('Card:', card)
   if (isCardRevealed(index)) {
     // Return the image URL for the revealed card
-    return new URL(`../../assets/Tiles/cards/${card.image}`, import.meta.url).href
+    return new URL(`../../assets/Tiles/cards/${card}.png`, import.meta.url).href
   }
   // Return the back face of the card (default image when hidden)
   return new URL('../../assets/Tiles/cards/0.png', import.meta.url).href
@@ -78,10 +83,7 @@ const getCardImage = (index) => {
 const handleCardClick = (index) => {
   if (!isCardRevealed(index)) {
     // Emit event or handle card flip
-    // emit('playPieceOfBoard', index)
-    toast({
-      title: 'Card clicked, not implemented',
-    })
+    emit('playPieceOfBoard', index)
   }
 }
 

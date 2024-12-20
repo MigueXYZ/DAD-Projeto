@@ -7,10 +7,14 @@ exports.createGameEngine = () => {
         // 2 -> player 2 wins
         // 3 -> draw
         gameFromDB.currentPlayer = 1;
-        gameFromDB.pairs = { 1: 0, 2: 0 };
+        gameFromDB.totalPairs = { p1: 0, p2: 0 };
         gameFromDB.turns = 0;
         gameFromDB.board = generateShuffledBoard(gameFromDB.board_size);
         gameFromDB.revealedCards = []; // Stores indices of currently revealed cards
+        for (let i = 0; i < gameFromDB.board_size; i++) {
+            gameFromDB.revealedCards.push(-1);
+        }
+        gameFromDB.lastPlayedCard = null; // Stores indices of last played cards
         return gameFromDB;
     };
 
@@ -67,44 +71,73 @@ exports.createGameEngine = () => {
         }
     };
 
-    // Reveal a card (returns the card value or an error object)
-    const revealCard = (game, index, playerSocketId) => {
+    // Play a card
+    const play = (game, cardIndex, playerSocketId, callback) => {
+        if(cardIndex < 0 || cardIndex > (game.board_size-1)){
+            return {
+                errorCode: 10,
+                errorMessage: 'Invalid card index!',
+            };
+        }
+
+        if(gameEnded(game)){
+            return {
+                errorCode: 11,
+                errorMessage: 'Game has already ended!',
+            };
+        }
+
+        // Check if it's the player's turn
         if (!isPlayerTurn(game, playerSocketId)) {
             return {
                 errorCode: 12,
-                errorMessage: 'Invalid play: It is not your turn!',
+                errorMessage: 'It is not your turn!',
             };
         }
 
-        if (game.board[index] === null || game.revealedCards.includes(index)) {
+        // Check if the card is already revealed
+        if (game.revealedCards[cardIndex] !== -1) {
             return {
                 errorCode: 13,
-                errorMessage: 'Invalid play: card already revealed!',
+                errorMessage: 'Card is already revealed!',
             };
         }
 
-        game.revealedCards.push(index);
 
-        // If two cards are revealed, check for a match
-        if (game.revealedCards.length === 2) {
-            const [firstIndex, secondIndex] = game.revealedCards;
-            if (game.board[firstIndex] === game.board[secondIndex]) {
-                game.scores[game.currentPlayer]++;
-                game.board[firstIndex] = null;
-                game.board[secondIndex] = null;
-                game.revealedCards = [];
-                updateGameStatus(game);
-            } else {
-                // If no match, reset after the current player's turn
-                game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-                setTimeout(() => {
-                    game.revealedCards = [];
-                }, 1000);
-            }
+        // Reveal the card
+        game.revealedCards[cardIndex] = game.board[cardIndex]+1;
+
+        // Check if two cards are revealed
+        // If yes, check if they are a pair
+
+        if(game.lastPlayedCard === null){
+            game.lastPlayedCard = cardIndex;
+            return true;
         }
 
-        return true;
-    };
+        if(game.board[game.lastPlayedCard] !== game.board[cardIndex]){
+            game.revealedCards[game.lastPlayedCard] = -1;
+            game.revealedCards[cardIndex] = -1;
+            game.lastPlayedCard = null;
+            //change player
+            game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
+
+            return true;
+        }
+
+        if(game.board[game.lastPlayedCard] === game.board[cardIndex]){
+            game.totalPairs[game.currentPlayer]++;
+            game.lastPlayedCard = null;
+
+            //Do not change player, they get to keep playing
+
+            // Check if the game has ended
+            if(isGameComplete(game)){
+                updateGameStatus(game);
+            }
+            return true;
+        }
+    }
 
     // Check if it's the player's turn
     const isPlayerTurn = (game, playerSocketId) => {
@@ -154,7 +187,7 @@ exports.createGameEngine = () => {
 
     return {
         initGame,
-        revealCard,
+        play,
         gameEnded,
         quit,
         close,

@@ -79,7 +79,7 @@ export const useGameStore = defineStore('game', () => {
         }
     };
 
-    const fetchPlayingGames = () => {
+    const fetchPlayingGames = async () => {
         errorStore.resetMessages();
         socket.emit('fetchPlayingGames', (response) => {
             if (response.errorCode) {
@@ -111,15 +111,20 @@ export const useGameStore = defineStore('game', () => {
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
-    const play = (game, idx1, idx2) => {
+    const playPieceOfBoard = (gameL, idx) => {
         errorStore.resetMessages();
-        socket.emit('play', { index1: idx1, index2:idx2, gameId: game.id }, (response) => {
-            if (response.errorCode) {
+        //send play to server
+        socket.emit('play', {
+            index: idx,
+            gameId: gameL.id,
+        },
+        (response) => {
+            if(response.errorCode){
                 errorStore.setErrorMessages(response.errorMessage, [], response.errorCode);
                 return;
             }
-            updateGame(response);
         });
+        return;
     };
 
     const quit = (game) => {
@@ -341,7 +346,7 @@ export const useGameStore = defineStore('game', () => {
         restoreGame,
         playerNumberOfCurrentUser,
         fetchGame,
-        play,
+        playPieceOfBoard,
         close,
         quit,
     };

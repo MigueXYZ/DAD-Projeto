@@ -220,13 +220,15 @@ io.on("connection", (socket) => {
   })
 
   socket.on('play', (playData, callback) => {
+    console.log('play', socket.id, playData)
     if (!util.checkAuthenticatedUser(socket, callback)) {
       return
     }
     const roomName = 'game_' + playData.gameId
     // load game state from the game data stored directly on the room object:
-    const game = socket.adapter.rooms.get(roomName).game
-    const playResult = gameEngine.play(game, playData.index, socket.id)
+    const cur_game = socket.adapter.rooms.get(roomName).game
+    console.log('play users:', cur_game.player1SocketId , cur_game.player2SocketId,callback)
+    const playResult = gameEngine.play(cur_game, playData.index, socket.id)
     if (playResult !== true) {
       if (callback) {
         callback(playResult)
@@ -235,12 +237,12 @@ io.on("connection", (socket) => {
     }
     // notify all users playing the game (in the room) that the game state has changed
     // Also, notify them that the game has ended
-    io.to(roomName).emit('gameChanged', game)
-    if (gameEngine.gameEnded(game)) {
-      io.to(roomName).emit('gameEnded', game)
+    io.to(roomName).emit('gameChanged', cur_game)
+    if (gameEngine.gameEnded(cur_game)) {
+      io.to(roomName).emit('gameEnded', cur_game)
     }
     if (callback) {
-      callback(game)
+      callback(cur_game)
     }
   })
 

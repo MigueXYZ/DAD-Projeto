@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/button'
 import Board from '@/components/multiplayer/Board.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useGameStore } from '@/stores/game'
+import {useToast} from "@/components/ui/toast/index.js";
 
 // Stores
 const storeGames = useGameStore()
 const storeAuth = useAuthStore()
+
+const { toast } = useToast()
 
 // Props
 const props = defineProps({
@@ -23,8 +26,8 @@ const alertDialog = inject('alertDialog')
 // Computed Properties
 const opponentName = computed(() => {
   return storeGames.playerNumberOfCurrentUser(props.game) === 1
-      ? storeAuth.getFirstLastName(props.game.player2.nickname)
-      : storeAuth.getFirstLastName(props.game.player1.nickname)
+      ? storeAuth.getFirstLastName(props.game.player2?.nickname)
+      : storeAuth.getFirstLastName(props.game.player1?.nickname)
 })
 
 const gameEnded = computed(() => props.game.gameStatus > 0)
@@ -95,8 +98,8 @@ const statusGameMessage = computed(() => {
 })
 
 // Methods
-const playPieceOfBoard = (idx1, idx2) => {
-  storeGames.play(props.game, idx1, idx2)
+const playPieceOfBoard = (idx) => {
+  storeGames.playPieceOfBoard(props.game, idx)
 }
 
 const clickCardButton = () => {
