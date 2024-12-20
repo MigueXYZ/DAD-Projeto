@@ -33,6 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/transactions', [TransactionController::class , 'store']);
     Route::post('/games/{game}/players', [GameController::class , 'storeMultiplayerGame']);
     Route::patch('/multiplayer-games',[MultiplayerGamesPlayedController::class, 'updateIt']);
+    Route::get('/multiplayer-scoreboard',);
 });
 Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
 

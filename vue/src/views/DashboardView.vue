@@ -27,13 +27,24 @@
             >
               Play SinglePlayer
             </button>
-              <button
-                v-if="authStore.isLoggedIn && !authStore.isAdmin && authStore.user.brain_coins_balance > 5"
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-x-4">
+            <button
+                v-if="authStore.isLoggedIn && !authStore.isAdmin"
+                :disabled="authStore.user.brain_coins_balance < 5"
                 @click="goToMultiplayer"
                 class="w-auto lg:w-full py-3  bg-blue-700 text-white rounded-md hover:bg-blue-600 transition duration-200"
-              >
-                Join Lobby
-              </button>
+            >
+              Join Lobby
+            </button>
+
+            <button
+                v-if="authStore.isLoggedIn"
+                @click="goToMultiplayerScoreboards"
+                class="w-auto lg:w-full py-3  bg-blue-700 text-white rounded-md hover:bg-blue-600 transition duration-200"
+            >
+              Multiplayer Scoreboards
+            </button>
           </div>
           <div
               :class=" authStore.isLoggedIn && !authStore.isAdmin ? 'grid grid-cols-2 gap-x-4' : 'grid grid-cols-1 gap-x-4'">
@@ -98,6 +109,10 @@ const checkAuth = async () => {
     await router.push('/login'); // Redirect to login if not authenticated
   }
 };
+
+const goToMultiplayerScoreboards = () =>{
+  router.push('/multiplayer-scoreboards');
+}
 
 // Fetch board data from API
 const load = async () => {

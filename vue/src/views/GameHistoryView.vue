@@ -39,10 +39,12 @@
       <li v-for="game in games" :key="game.id" class="mb-2 border p-2">
         <p><strong>Game ID:</strong> {{ game.id }}</p>
         <p><strong>State:</strong> {{ game.status }} </p>
+        <p><strong>Type:</strong> {{game.type==='M'?'Multiplayer':'Singleplayer'}}</p>
+        <p v-if="game.type==='M'"><strong></strong></p>
         <p><strong>Board:</strong>{{ boards.find(board => board.id === game.board_id)?.board_cols || '-' }}x{{ boards.find(board => board.id === game.board_id)?.board_rows || 'N/A' }}</p>
         <p><strong>Total Turns:</strong> {{ game.total_turns_winner === null ? 'N/A' : game.total_turns_winner}}</p>
         <p><strong>Total Time:</strong> {{ game.total_time === null ? 'N/A' : game.total_time }}</p>
-        <p><strong>Winner:</strong> {{ game.winner_user_id === null ? 'Yes' : game.winner_user_id }}</p>
+        <p><strong>Winner:</strong> {{ names.length ? names.find(name => name.id === game.winner_user_id)?.name || 'N/A' : 'Loading...' }}</p>
       </li>
     </ul>
 
@@ -77,6 +79,16 @@ const filters = ref({
 const loading = ref(false);
 const page = ref(1);
 const totalPages = ref(0);
+const names = ref([]);
+
+const fetchNames = async () => {
+  try {
+    const response = await axios.get("/users/names");
+    names.value = response.data;
+  } catch (error) {
+    console.error("Error fetching names:", error);
+  }
+};
 
 // Função para buscar jogos
 const fetchGames = async () => {
@@ -122,6 +134,7 @@ const loadPage = async (newPage) => {
 // Busca inicial
 onMounted(() => {
   fetchGames();
+  fetchNames();
   fetchBoards();
 });
 </script>
