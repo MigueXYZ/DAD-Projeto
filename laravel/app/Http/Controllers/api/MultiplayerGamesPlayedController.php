@@ -15,10 +15,10 @@ class MultiplayerGamesPlayedController extends Controller
      */
     public function index()
     {
-        // Retrieve all multiplayer games played
-        $gamesPlayed = MultiplayerGamesPlayed::all();
+        // Get all multiplayer games played
+        $multiplayerGames = MultiplayerGamesPlayed::all();
 
-        return MultiplayerGamesPlayedResource::collection($gamesPlayed);
+        return MultiplayerGamesPlayedResource::collection($multiplayerGames);
     }
 
     /**
@@ -98,5 +98,49 @@ class MultiplayerGamesPlayedController extends Controller
         // Retornar o recurso atualizado
         return new MultiplayerGamesPlayedResource($multiplayerGamePlayed);
     }
+
+    public function getScoreboard()
+    {
+        // Obter os registros de partidas multiplayer com informações dos jogos
+        $multiplayerGames = MultiplayerGamesPlayed::with('game.board')->get();
+
+        // Agrupar os registros por tabuleiro (board)
+        $scoreboard = $multiplayerGames->groupBy(function ($gamePlayed) {
+            return $gamePlayed->game->board_id;
+        });
+
+        // Processar cada grupo (board) para criar os scoreboards
+        $scoreboard = $scoreboard->map(function ($gamesByBoard, $boardId) {
+            // Agrupar por utilizador dentro do tabuleiro
+            $groupedByUser = $gamesByBoard->groupBy('user_id');
+
+            // Calcular a pontuação de cada user
+            $userScores = $groupedByUser->map(function ($games) {
+                $victories = $games->sum('player_won');
+                return [
+                    'user_id' => $games->first()->user_id,
+                    'victories' => $victories,
+                    'defeats' => $games->count() - $victories,
+                ];
+            });
+
+            // Ordenar por vitórias e depois por derrotas
+            $userScores = $userScores->sortByDesc('victories')->sortBy('defeats');
+
+            // Limitar aos 5 melhores jogadores
+            $topPlayers = $userScores->take(5);
+
+            return [
+                'board_id' => $boardId,
+                'scoreboard' => $topPlayers->values(),
+            ];
+        });
+
+        //order by board_id
+        $scoreboard = $scoreboard->sortBy('board_id');
+
+        return response()->json($scoreboard->values());
+    }
+
 
 }

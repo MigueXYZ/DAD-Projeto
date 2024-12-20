@@ -31,7 +31,7 @@ class GameController extends Controller
         }
 
 
-        $query = Game::query();
+        $query = Game::with('MultiplayerGamesPlayed');
 
         if($ended){
             $query->where('status', 'E');
@@ -278,6 +278,16 @@ class GameController extends Controller
         ]);
     }
 
+    public function getMultiplayerGames($gameId): JsonResponse
+    {
+        $game = Game::find($gameId);
+        if(!$game){
+            return response()->json(['error' => 'Game not found'], 404);
+        }
 
+        $multiplayerGames = $game->multiplayerGamesPlayed;
+
+        return response()->json($multiplayerGames);
+    }
 
 }

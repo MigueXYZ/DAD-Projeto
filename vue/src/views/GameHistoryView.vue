@@ -45,6 +45,13 @@
         <p><strong>Total Turns:</strong> {{ game.total_turns_winner === null ? 'N/A' : game.total_turns_winner}}</p>
         <p><strong>Total Time:</strong> {{ game.total_time === null ? 'N/A' : game.total_time }}</p>
         <p><strong>Winner:</strong> {{ names.length ? names.find(name => name.id === game.winner_user_id)?.name || 'N/A' : 'Loading...' }}</p>
+        <button
+          v-if="game.type==='M'"
+          class="w-full py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-md transition duration-200 my-2"
+          @click="showModal(game.id)"
+        >
+            Ver Jogadores
+        </button>
       </li>
     </ul>
 
@@ -62,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import {ref, onMounted, inject} from "vue";
 import { useAuthStore } from "@/stores/auth";
 import axios from "axios";
 
@@ -70,6 +77,7 @@ import axios from "axios";
 const authStore = useAuthStore();
 const games = ref([]);
 const boards = ref([]);
+const alertDialog = inject('alertDialog');
 const filters = ref({
   board: "",
   by: "created_at",  // Ordenar por created_at por padrão
@@ -129,6 +137,32 @@ const loadPage = async (newPage) => {
     page.value = newPage;
     await fetchGames();
   }
+};
+
+// Modal
+const showModal = async (gameId) => {
+  const players = await axios.get(`/games/${gameId}/players`);
+  console.log(players.data);
+
+  //for each player in players.data, add name stored in names
+  players.data.forEach(player => {
+    player.name = names.value.find(name => name.id === player.user_id)?.name || 'Loading...';
+  });
+
+  alertDialog.value.open(
+    okay,
+    cancel,
+    'Players',
+    'Okay',
+    'Cancel',
+    'Players: '+players.data.map(player => player.name).join(', '),
+  )
+};
+
+const cancel = () => {
+};
+
+const okay = () => {
 };
 
 // Busca inicial
