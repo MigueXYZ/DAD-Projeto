@@ -22,18 +22,27 @@ class UserController extends Controller
     /**
      * Display a listing of the resource, including soft-deleted users if requested.
      */
-    public function index(Request $request)
-    {
-        // If `with_deleted` query parameter is set, include soft-deleted users
-        if ($request->query('with_deleted')) {
-            $users = User::withTrashed()->get();
-        } else {
-            $users = User::all();
-        }
-
-        // Return the users with a 200 OK status
-        return UserResource::collection($users);
+public function index(Request $request)
+{
+    // If `with_deleted` query parameter is set, include soft-deleted users
+    if ($request->query('with_deleted')) {
+        $users = User::withTrashed()->paginate(15); // Paginate 10 users per page
+    } else {
+        $users = User::paginate(15); // Paginate 10 users per page
     }
+
+    // Return the paginated users with a 200 OK status
+    return UserResource::collection($users)
+        ->additional([
+            'meta' => [
+                'currentPage' => $users->currentPage(),
+                'totalPages' => $users->lastPage(),
+                'pageSize' => $users->perPage(),
+                'totalItems' => $users->total(),
+            ],
+        ]);
+}
+
 
     /**
      * Store a newly created resource in storage.
