@@ -11,6 +11,7 @@ exports.createGameEngine = () => {
         gameFromDB.turns = 0;
         gameFromDB.board = generateShuffledBoard(gameFromDB.board_size);
         gameFromDB.revealedCards = []; // Stores indices of currently revealed cards
+        gameFromDB.locked=0;
         for (let i = 0; i < gameFromDB.board_size; i++) {
             gameFromDB.revealedCards.push(-1);
         }
@@ -53,15 +54,16 @@ exports.createGameEngine = () => {
 
     // Check if the game has ended
     const isGameComplete = (game) => {
-        return game.board.every((card) => card === null) || game.gameStatus > 0;
+        //if revealed cards are all not -1, then the game is complete
+        return game.revealedCards.every((card) => card !== -1);
     }
 
     // Update the game status based on the scores or game completion
     const updateGameStatus = (game) => {
         if (isGameComplete(game)) {
-            if (game.scores[1] > game.scores[2]) {
+            if (game.totalPairs.p1 > game.totalPairs.p2) {
                 game.gameStatus = 1;
-            } else if (game.scores[2] > game.scores[1]) {
+            } else if (game.totalPairs.p2 > game.totalPairs.p1) {
                 game.gameStatus = 2;
             } else {
                 game.gameStatus = 3;
@@ -69,10 +71,13 @@ exports.createGameEngine = () => {
         } else {
             game.gameStatus = 0;
         }
+        console.log('updateGameStatus:', game.gameStatus);
     };
 
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
     // Play a card
-    const play = (game, cardIndex, playerSocketId, callback) => {
+    const play = async (game, cardIndex, playerSocketId, io, roomName) => {
         if(cardIndex < 0 || cardIndex > (game.board_size-1)){
             return {
                 errorCode: 10,
@@ -84,6 +89,13 @@ exports.createGameEngine = () => {
             return {
                 errorCode: 11,
                 errorMessage: 'Game has already ended!',
+            };
+        }
+
+        if(game.locked){
+            return {
+                errorCode: 15,
+                errorMessage: 'Game is locked!',
             };
         }
 
@@ -103,9 +115,10 @@ exports.createGameEngine = () => {
             };
         }
 
-
         // Reveal the card
         game.revealedCards[cardIndex] = game.board[cardIndex]+1;
+        io.to(roomName).emit('gameChanged', game);
+
 
         // Check if two cards are revealed
         // If yes, check if they are a pair
@@ -116,12 +129,14 @@ exports.createGameEngine = () => {
         }
 
         if(game.board[game.lastPlayedCard] !== game.board[cardIndex]){
+            game.locked=1;
+            await delay(2000);
+            game.locked=0;
             game.revealedCards[game.lastPlayedCard] = -1;
             game.revealedCards[cardIndex] = -1;
             game.lastPlayedCard = null;
-            //change player
             game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-
+            io.to(roomName).emit('gameChanged', game);
             return true;
         }
 
@@ -134,7 +149,9 @@ exports.createGameEngine = () => {
             // Check if the game has ended
             if(isGameComplete(game)){
                 updateGameStatus(game);
+                io.to(roomName).emit('gameEnded', game);
             }
+            io.to(roomName).emit('gameChanged', game);
             return true;
         }
     }

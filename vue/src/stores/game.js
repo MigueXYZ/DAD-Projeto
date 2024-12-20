@@ -171,6 +171,7 @@ export const useGameStore = defineStore('game', () => {
     });
 
     socket.on('gameEnded', (endedGame) => {
+        console.log('Game ended:', endedGame);
         updateGame(endedGame);
         toast({
             title: 'Game Ended',
