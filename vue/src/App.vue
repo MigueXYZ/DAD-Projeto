@@ -4,11 +4,17 @@
     <!-- Left Side -->
     <div class="flex items-center space-x-4">
       <h1 class="text-xl lg:text-3xl font-semibold">
-        <button
+        <button v-if="!authStore.isAdmin"
           @click="home"
           class="text-xl lg:text-3xl font-semibold"
         >
           Memory Game
+        </button>
+        <button v-else
+          @click="home"
+          class="text-l lg:text-2xl font-semibold"
+        >
+          Memory Game Administration
         </button>
       </h1>
       

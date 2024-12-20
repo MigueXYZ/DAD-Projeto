@@ -6,9 +6,11 @@
     <!-- Main Content Section -->
     <main class="flex-1 w-full max-w-4xl px-6 py-8 mx-auto">
       <div class="grid grid-cols-1 gap-6">
+        
         <!-- Brain Coins Balance Component -->
 
         <div class="bg-white p-6 mt-8 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+          <h1 v-if="authStore.isAdmin"  class="text-l lg:text-xl font-semibold text-slate-600 ">Administration Tools</h1>
           <BrainCoinsBalance
               v-if="authStore.isLoggedIn"
           />
@@ -139,6 +141,8 @@ const logout = async () => {
     alert('An error occurred while logging out. Please try again.');
   }
 };
+
+
 
 // Run on component mount
 onMounted(() => {

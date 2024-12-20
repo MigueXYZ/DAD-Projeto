@@ -16,6 +16,7 @@ import BuyGameCoinsView from "@/views/BuyGameCoinsView.vue";
 import MultiPlayerGames from "@/components/multiplayer/MultiPlayerGames.vue";
 import {useAuthStore} from "@/stores/auth.js";
 import {useGameStore} from "@/stores/game.js";
+import UserListView from '@/views/UserListView.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +36,7 @@ const router = createRouter({
     { path: '/register', component: RegisterView, name: 'register' },
     { path: '/transactions/me', component: TransactionHistoryView, name: 'transactions' },
     { path: '/buy-coins', component: BuyGameCoinsView, name: 'buy-coins' },
+    { path: '/users', component: UserListView, name: 'users' },
     { path: '/multiplayer', component: MultiPlayerGames, name: 'multiplayer' },
     {
       path: '/testers',
@@ -70,19 +72,25 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Check if user is logged in and trying to access protected routes
-  const protectedRoutes = ['history', 'profile', 'multiplayer']; // Example routes that need authentication
-  const notAdminRoutes = ['size','game','multiplayer'];
+  const protectedRoutes = ['history', 'profile','buy-coins','transactions','buy-coins']; // Example routes that need authentication
+  const playerRoute=['buy-coins', 'game', 'size' ]
+  const adminRoute=['users']
 
-  if (notAdminRoutes.includes(to.name) && storeAuth.isAdmin) {
-    // If the user is an admin, redirect to dashboard
+  if(adminRoute.includes(to.name) && !storeAuth.isAdmin){
+    next({ name: 'dashboard' });
+  }
+
+  if(playerRoute.includes(to.name) && storeAuth.isAdmin){
     next({ name: 'dashboard' });
   }
 
   if (protectedRoutes.includes(to.name) && !storeAuth.isLoggedIn) {
     // If the user is not logged in, redirect to login page
     next({ name: 'login' });
+  } else {
+    // Otherwise, allow the navigation
+    next();
   }
-  next();
 });
 
 
