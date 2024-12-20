@@ -18,46 +18,45 @@ class GameController extends Controller
      */
     public function index(Request $request)
     {
-        $user = $request->user(); // Get the authenticated user
 
-        // Read filter parameters from the query string
-        $board = $request->query('board');  // Board filter
-        $by = $request->query('by', 'created_at');  // Sorting field
-        $order = $request->query('order', 'desc');  // Sort direction
+        // Lê os parâmetros opcionais da query string
+        $board = $request->query('board');
+        $by = $request->query('by');
+        $order = $request->query('order');
+        $ended= $request->query('ended');
+
+        // Validar a ordem de ordenação
+        if ($order && !in_array($order, ['asc', 'desc'])) {
+            return response()->json(['error' => 'Invalid order direction'], 400);
+        }
 
 
-        // Start with the base query: only include finished games
-        $query = Game::where('status', 'E');
+        $query = Game::query();
 
-        // Apply the board filter if it exists
+        if($ended){
+            $query->where('status', 'E');
+        }
+
+        // Filtra por board, se fornecido
         if ($board) {
             $query->where('board_id', $board);
         }
 
-        // Apply sorting filter if it's valid
-        if (in_array($by, ['total_time', 'total_turns_winner']) && in_array($order, ['asc', 'desc'])) {
+        // Ordena por parâmetros fornecidos
+        if ($by && in_array($order, ['asc', 'desc'])) {
             $query->orderBy($by, $order);
-            // Ordena por parâmetros fornecidos
-            if ($by && in_array($order, ['asc', 'desc'])) {
-                $query->orderBy($by, $order);
-                if($by === 'total_time'){
-                    $query->orderBy('total_turns_winner', 'asc');
-                }
-                if($by === 'total_turns_winner'){
-                    $query->orderBy('total_time', 'asc');
-                }
+            if($by === 'total_time'){
+                $query->orderBy('total_turns_winner', 'asc');
+            }
+            if($by === 'total_turns_winner'){
+                $query->orderBy('total_time', 'asc');
             }
         }
 
-        // If the user is authenticated, filter by their games
-        if ($user) {
-            $query->where('user_id', $user->id);  // Assuming the user's ID is stored in 'user_id' in the Game model
-        }
-
-        // Paginate the results (5 games per page)
+        // Pagina os resultados
         $games = $query->paginate(5);
 
-        // Return the games as a paginated JSON resource
+        // Retorna os jogos com a resposta formatada
         return GameResource::collection($games);
     }
 
@@ -244,6 +243,8 @@ class GameController extends Controller
         // Retorna os jogos com a resposta formatada
         return GameResource::collection($games);
     }
+
+
 
 
 }

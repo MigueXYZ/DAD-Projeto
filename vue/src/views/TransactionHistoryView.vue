@@ -54,6 +54,7 @@
 </template>
 
 <script setup>
+import { useAuthStore } from '@/stores/auth';
 import {ref, onMounted} from 'vue';
 import axios from 'axios';
 
@@ -64,12 +65,15 @@ const success = ref('');
 const currentPage = ref(1); // Página atual
 const totalPages = ref(1); // Total de páginas
 const pageSize = ref(10); // Limite de itens por página
+const authStore = useAuthStore();
 
 // Função para buscar transações com paginação
 const fetchTransactions = async (page = 1) => {
   try {
     error.value = '';
-    const response = await axios.get('/transactions/me', {
+    const getAll = '/transactions'
+    const getMine = '/transactions/me'
+    const response = await axios.get(authStore.isAdmin?getAll:getMine, {
       params: {
         page,
         limit: pageSize.value,

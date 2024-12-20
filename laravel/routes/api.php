@@ -25,9 +25,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::patch('/users/me', [UserController::class , 'updateMe']);
     Route::delete('/users/me', [UserController::class , 'destroyMe']);
     Route::get('/games/me', [GameController::class , 'showMe']);
+    Route::get('/games', [GameController::class , 'index']);
     Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);
     Route::post('/users/me/brain_coins', [TransactionController::class , 'store']);
     Route::get('/transactions/me', [TransactionController::class , 'showMe']);
+    Route::get('/transactions', [TransactionController::class , 'index']);
     Route::post('/transactions', [TransactionController::class , 'store']);
 
 });

@@ -83,7 +83,7 @@ const fetchGames = async () => {
   loading.value = true;
 
   try {
-    const { data } = await axios.get("/games/me", {
+    const { data } = await axios.get(!authStore.isAdmin?"/games/me":"/games", {
       params: {
         board: filters.value.board,
         by: filters.value.by,

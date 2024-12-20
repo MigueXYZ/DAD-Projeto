@@ -13,10 +13,20 @@ use Illuminate\Validation\ValidationException;
 class TransactionController extends Controller
 {
     public function index()
-    {
-        $transactions = Transaction::all();
-        return response()->json($transactions);
-    }
+{
+    $transactions = Transaction::orderBy('transaction_datetime', 'desc')->paginate(15);
+
+    return response()->json([
+        'data' => TransactionResource::collection($transactions->items()),
+        'meta' => [
+            'currentPage' => $transactions->currentPage(),
+            'totalPages' => $transactions->lastPage(),
+            'pageSize' => $transactions->perPage(),
+            'totalItems' => $transactions->total(),
+        ],
+    ]);
+}
+
 
     public function store(Request $request)
     {
@@ -75,6 +85,7 @@ class TransactionController extends Controller
             ->select('id', 'user_id', 'transaction_datetime', 'type', 'payment_reference', 'brain_coins', 'euros')
             ->paginate(15);
 
+        
         return response()->json([
             'data' => TransactionResource::collection($transactions->items()),
             'meta' => [
