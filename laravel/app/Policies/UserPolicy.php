@@ -56,6 +56,12 @@ class UserPolicy
             return true;
         }
 
+        if ($user->isAdmin() && $model->isAdmin() && $user!==$model) {
+            return true;
+        }
+        
+
+
         return false;
     }
 

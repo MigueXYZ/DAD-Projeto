@@ -24,7 +24,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/users/me', [UserController::class , 'showMe']);
     Route::get('/users', [UserController::class , 'index']);
     Route::patch('/users/me', [UserController::class , 'updateMe']);
+    Route::patch('/users/{user}', [UserController::class , 'blockHim']);
     Route::delete('/users/me', [UserController::class , 'destroyMe']);
+    Route::delete('/users/{user}', [UserController::class , 'destroyHim']);
     Route::get('/games/me', [GameController::class , 'showMe']);
     Route::get('/games', [GameController::class , 'index']);
     Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);

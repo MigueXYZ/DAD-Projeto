@@ -136,6 +136,45 @@ public function index(Request $request)
         return response()->json(['message' => 'User deleted successfully'], 200);
     }
 
+    public function destroyHim(Request $request, User $user)
+    {
+
+        $adminUser = $request->user();
+        // Obtém o utilizador autenticado
+        if($adminUser->isAdmin()){
+          // Aplica a verificação da policy
+            $this->authorize('delete', $user);
+
+            $user->brain_coins_balance = 0;
+
+            // Apaga o utilizador
+            $user->delete();
+
+            return response()->json(['message' => 'User deleted successfully'], 200);
+        }
+        else{
+          return response()->json(['message' => 'Unauthorized'], 403);   
+        }
+        
+    }
+
+    public function blockHim(Request $request, User $user)
+    {
+
+        $adminUser = $request->user();
+        // Obtém o utilizador autenticado
+        if($adminUser->isAdmin()){
+          // Aplica a verificação da policy
+            $this->authorize('update', $user);
+                $user->blocked=!$user->blocked;
+                $user->save();
+            }
+            
+
+            return response()->json(['message' => 'User blocked successfully'], 200);
+
+        
+    }
 
     /**
      * Restore a soft-deleted user.

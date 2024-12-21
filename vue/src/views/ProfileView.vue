@@ -276,7 +276,7 @@ const logout = async () => {
 // Delete account method
 const deleteAccount = async () => {
   try {
-    await authStore.deleteAccount();
+    await authStore.deleteMyAccount();
     await router.push('/login');
   } catch (err) {
     console.error('Error deleting account:', err);

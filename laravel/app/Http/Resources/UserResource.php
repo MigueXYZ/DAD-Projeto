@@ -22,6 +22,7 @@ class UserResource extends JsonResource
             'nickname' => $this->nickname,
             'photo_filename' => $this->photo_filename,
             'brain_coins_balance' => $this->brain_coins_balance,
+            'blocked' => $this->blocked,
         ];
     }
 }

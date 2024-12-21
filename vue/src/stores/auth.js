@@ -57,7 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value ? user.value.photo_filename : avatarNoneAssetURL
   })
 
-  const deleteAccount = async () => {
+  const deleteMyAccount = async () => {
     storeError.resetMessages()
     try {
       await axios.delete('users/me')
@@ -66,6 +66,48 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (e) {
       clearUser()
+      storeError.setErrorMessages(
+          e.response.data.message,
+          e.response.data.errors,
+          e.response.status,
+          'Delete Account Error!'
+      )
+      toast({
+        description: e.response.data.message,
+        variant:"destructive",
+      })
+      return false
+    }
+  }
+
+  const deleteAccount = async (id) => {
+    storeError.resetMessages()
+    try {
+      await axios.delete('users/'+id)
+      await router.push({name: 'users'})
+      return true
+    } catch (e) {
+      storeError.setErrorMessages(
+          e.response.data.message,
+          e.response.data.errors,
+          e.response.status,
+          'Delete Account Error!'
+      )
+      toast({
+        description: e.response.data.message,
+        variant:"destructive",
+      })
+      return false
+    }
+  }
+
+  const blockUser = async (id) => {
+    storeError.resetMessages()
+    try {
+      await axios.patch('users/'+id)
+      await router.push({name: 'users'})
+      return true
+    } catch (e) {
       storeError.setErrorMessages(
           e.response.data.message,
           e.response.data.errors,
@@ -255,11 +297,13 @@ export const useAuthStore = defineStore('auth', () => {
     notifications,
     isAdmin,
     login,
+    deleteMyAccount,
     deleteAccount,
     logout,
     refreshToken,
     anonymousLogin,
     setUser,
     restoreToken,
+    blockUser,
   }
 })

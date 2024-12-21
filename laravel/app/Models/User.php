@@ -82,4 +82,11 @@ class User extends Authenticatable
         return $this->type === 'A';
     }
 
+    public function isBlocked()
+    {
+        return $this->blocked;
+    }
+
+    
+
 }
