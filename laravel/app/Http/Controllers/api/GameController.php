@@ -290,4 +290,26 @@ class GameController extends Controller
         return response()->json($multiplayerGames);
     }
 
+    public function getNumGames(): JsonResponse
+    {
+        $numGames = Game::count();
+        return response()->json(['num_games' => $numGames]);
+    }
+
+    public function getNumGamesByBoard(): JsonResponse
+    {
+        $numGamesByBoard = Game::select('board_id', Game::raw('count(*) as total'))
+            ->groupBy('board_id')
+            ->get();
+        return response()->json($numGamesByBoard);
+    }
+
+    public function getNumGamesByGameMode(): JsonResponse
+    {
+        $numGamesByGameMode = Game::select('type', Game::raw('count(*) as total'))
+            ->groupBy('type')
+            ->get();
+        return response()->json($numGamesByGameMode);
+    }
+
 }

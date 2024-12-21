@@ -39,12 +39,23 @@
             </button>
 
             <button
+                v-if="authStore.isLoggedIn && authStore.isAdmin"
+                @click="goToStatistics"
+                class="w-auto lg:w-full py-3  bg-blue-700 text-white rounded-md hover:bg-blue-600 transition duration-200"
+            >
+              Statistics
+            </button>
+
+            <button
                 v-if="authStore.isLoggedIn"
                 @click="goToMultiplayerScoreboards"
                 class="w-auto lg:w-full py-3  bg-blue-700 text-white rounded-md hover:bg-blue-600 transition duration-200"
             >
               Multiplayer Scoreboards
             </button>
+
+
+
           </div>
           <div
               :class=" authStore.isLoggedIn && !authStore.isAdmin ? 'grid grid-cols-2 gap-x-4' : 'grid grid-cols-1 gap-x-4'">
@@ -142,6 +153,10 @@ const scoreboard = () => {
 
 const goToMultiplayer = () => {
   router.push('/multiplayer');
+};
+
+const goToStatistics = () => {
+  router.push('/statistics');
 };
 
 // Logout the user

@@ -29,12 +29,30 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/games/record/{game}', [GameController::class , 'checkForRecord']);
     Route::post('/users/me/brain_coins', [TransactionController::class , 'store']);
     Route::get('/transactions/me', [TransactionController::class , 'showMe']);
-    Route::get('/transactions', [TransactionController::class , 'index']);
     Route::post('/transactions', [TransactionController::class , 'store']);
     Route::post('/games/{game}/players', [GameController::class , 'storeMultiplayerGame']);
     Route::patch('/multiplayer-games',[MultiplayerGamesPlayedController::class, 'updateIt']);
     Route::get('/games/{game}/players', [GameController::class , 'getMultiplayerGames']);
     Route::get('/multiplayer-scoreboard', [MultiplayerGamesPlayedController::class, 'getScoreboard']);
+
+    //routes for the admin
+    Route::get('/transactions', [TransactionController::class , 'index']);
+    //estatisticas brain coins
+    Route::get('/brain_coins', [TransactionController::class , 'getBrainCoins']);
+    Route::get('/brain_coins/active', [UserController::class , 'getBrainCoins']);
+    //estatisticas jogos
+    Route::get('/games/total', [GameController::class , 'getNumGames']);
+    Route::get('/games/total/board', [GameController::class , 'getNumGamesByBoard']);
+    Route::get('/games/total/gamemode', [GameController::class , 'getNumGamesByGameMode']);
+    //estatisticas transacoes
+    Route::get('/transactions/total', [TransactionController::class , 'getNumTransactions']);
+    Route::get('/transactions/total/payment_method', [TransactionController::class , 'getNumTransactionsByPaymentMethod']);
+    Route::get('/transactions/total/type', [TransactionController::class , 'getNumTransactionsByType']);
+    //estatisticas utilizadores
+    Route::get('/users/total', [UserController::class , 'getNumUsers']);
+    Route::get('/users/total/active', [UserController::class , 'getNumActiveUsers']);
+
+
 });
 Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
 

@@ -174,6 +174,18 @@ class UserController extends Controller
             'custom' => 'nullable|array',  // Validate JSON as array
         ]);
 
+        if(isset($validated_data['brain_coins_balance'])){
+            //error if the user tries to change the brain_coins_balance
+            return response()->json(['error' => 'You cannot change the brain_coins_balance'], 400);
+        }
+
+        // I don't want to allow the user to change their email or name or nickname if password is not provided
+        if (!isset($validated_data['password'])) {
+            unset($validated_data['email']);
+            unset($validated_data['name']);
+            unset($validated_data['nickname']);
+        }
+
         // Update password if it's provided
         if (isset($validated_data['password'])) {
             $validated_data['password'] = Hash::make($validated_data['password']);
@@ -291,6 +303,35 @@ class UserController extends Controller
         }
     }
 
+    public function getBrainCoins(Request $request)
+    {
+        //get the sum of brain coins of the users that are not blocked nor deleted
+        $brain_coins = User::where('blocked', 0)
+            ->whereNull('deleted_at')
+            ->sum('brain_coins_balance');
 
+        return response()->json(['brain_coins' => $brain_coins], 200);
+    }
+
+    public function getNumUsers(Request $request)
+    {
+        //get the number of users that are not blocked nor deleted
+        $num_users = User::where('blocked', 0)
+            ->whereNull('deleted_at')
+            ->count();
+
+        return response()->json(['num_users' => $num_users], 200);
+    }
+
+    public function getNumActiveUsers(Request $request)
+    {
+        //get the number of users that are not blocked nor deleted
+        $num_users = User::where('blocked', 0)
+            ->whereNull('deleted_at')
+            ->where('blocked', 0)
+            ->count();
+
+        return response()->json(['num_users' => $num_users], 200);
+    }
 
 }

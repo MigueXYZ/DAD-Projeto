@@ -178,6 +178,7 @@ const fetchProfile = async () => {
         photo_filename: user.photo_filename || '',
         photo_filename_src: '',
       };
+
       if (profile.value.photo_filename) {
         profile.value.photo_filename_src = `http://${apiDomain}/storage/photos/${profile.value.photo_filename}`;
         photo_filenamePreview.value = profile.value.photo_filename_src;
@@ -213,10 +214,10 @@ const updateProfile = async () => {
   try {
     const updatedProfile = { ...profile.value };
 
-    // Remove the photo_filename preview (it's not needed for submission)
+    // Remove a prévia da foto (não é necessária no envio)
     delete updatedProfile.photo_filename_src;
 
-    // Check if the password and confirm password match
+    // Validar se as senhas coincidem
     if (updatedProfile.password !== updatedProfile.confirmPassword) {
       error.value = 'Passwords do not match.';
       toast({
@@ -226,14 +227,15 @@ const updateProfile = async () => {
       return;
     }
 
-    // Remove the confirm password property before sending the request
+    // Remover o campo de confirmação antes de enviar a solicitação
     delete updatedProfile.confirmPassword;
 
-    // Handle photo_filename upload if photo_filename has changed
-    if (profile.value.photo_filename && profile.value.photo_filename !== profile.value.photo_filename_src) {
+    // Verificar se uma nova imagem foi carregada
+    if (profile.value.photo_filename && typeof profile.value.photo_filename !== 'string') {
       const formData = new FormData();
       formData.append('photo_filename', profile.value.photo_filename);
 
+      // Fazer upload da imagem
       const uploadResponse = await axios.post('/upload-avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -241,11 +243,13 @@ const updateProfile = async () => {
       });
 
       updatedProfile.photo_filename = uploadResponse.data.filename;
-      console.log('photo_filename uploaded:', updatedProfile.photo_filename);
+      console.log('Photo uploaded:', updatedProfile.photo_filename);
+    } else {
+      // Não alterar o campo de imagem caso nenhuma nova imagem seja fornecida
+      delete updatedProfile.photo_filename;
     }
 
-
-    // Now update the profile data (this will send both updated profile data and photo_filename filename if it exists)
+    // Atualizar os dados do perfil
     const response = await axios.patch('/users/me', updatedProfile);
     authStore.setUser(response.data.data);
 
@@ -261,6 +265,7 @@ const updateProfile = async () => {
     });
   }
 };
+
 
 
 // Log out method
@@ -287,7 +292,6 @@ const deleteAccount = async () => {
 const isAdmin = authStore.isAdmin;
 
 onMounted(() => {
-  console.log((authStore.user.type));
   fetchProfile();
 });
 </script>

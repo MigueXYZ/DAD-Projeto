@@ -12,6 +12,36 @@ use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
+
+    public function getBrainCoins(Request $request)
+    {
+        $transactions=null;
+        $type= $request->input('type');
+        $duration= $request->input('duration');
+        //return the ammount of brain coins gotten by the users group by day
+        if($type=='day'){
+            $transactions = Transaction::selectRaw('DATE(transaction_datetime) as date, SUM(brain_coins) as brain_coins')
+                ->groupBy('date')
+                ->orderBy('date', 'desc')
+                ->limit($duration)
+                ->get();
+        }
+        //return the ammount of brain coins gotten by the users group by month
+        if($type=='month'){
+            $transactions = Transaction::selectRaw('MONTH(transaction_datetime) as month, SUM(brain_coins) as brain_coins')
+                ->groupBy('month')
+                ->orderBy('month', 'desc')
+                ->limit($duration)
+                ->get();
+        }
+        //get the number of total brain coins gotten by the users
+        if($type=='total'){
+            $transactions = Transaction::selectRaw('SUM(brain_coins) as brain_coins')
+                ->get();
+        }
+        return response()->json($transactions);
+    }
+
     public function index()
 {
     $transactions = Transaction::orderBy('transaction_datetime', 'desc')->paginate(15);
@@ -85,7 +115,7 @@ class TransactionController extends Controller
             ->select('id', 'user_id', 'transaction_datetime', 'type', 'payment_reference', 'brain_coins', 'euros')
             ->paginate(15);
 
-        
+
         return response()->json([
             'data' => TransactionResource::collection($transactions->items()),
             'meta' => [
@@ -123,4 +153,29 @@ class TransactionController extends Controller
         $transaction->delete();
         return response()->json(['message' => 'Transaction deleted successfully']);
     }
+
+    public function getNumTransactions(Request $request)
+    {
+        $transactions = Transaction::selectRaw('COUNT(*) as total_transactions')
+            ->get();
+        return response()->json($transactions);
+    }
+
+    public function getNumTransactionsByPaymentMethod(Request $request)
+    {
+        $transactions = Transaction::selectRaw('payment_type, COUNT(*) as total_transactions')
+            ->whereNotNull('payment_type')
+            ->groupBy('payment_type')
+            ->get();
+        return response()->json($transactions);
+    }
+
+    public function getNumTransactionsByType(Request $request)
+    {
+        $transactions = Transaction::selectRaw('type, COUNT(*) as total_transactions')
+            ->groupBy('type')
+            ->get();
+        return response()->json($transactions);
+    }
+
 }

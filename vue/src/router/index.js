@@ -15,6 +15,7 @@ import TransactionHistoryView from "@/views/TransactionHistoryView.vue";
 import BuyGameCoinsView from "@/views/BuyGameCoinsView.vue";
 import MultiPlayerGames from "@/components/multiplayer/MultiPlayerGames.vue";
 import MultiplayerScoreboardView from "@/views/MultiplayerScoreboardView.vue";
+import StatisticsView from "@/views/StatisticsView.vue";
 import {useAuthStore} from "@/stores/auth.js";
 import {useGameStore} from "@/stores/game.js";
 import UserListView from '@/views/UserListView.vue';
@@ -40,6 +41,7 @@ const router = createRouter({
     { path: '/users', component: UserListView, name: 'users' },
     { path: '/multiplayer', component: MultiPlayerGames, name: 'multiplayer' },
     { path: '/multiplayer-scoreboards', component: MultiplayerScoreboardView, name: 'multiplayer-scoreboards'},
+    { path: '/statistics', component: StatisticsView, name: 'statistics'},
     {
       path: '/testers',
       children: [
@@ -79,8 +81,8 @@ router.beforeEach(async (to, from, next) => {
   const notAdminRoutes = ['size','game','multiplayer'];
  */
   const protectedRoutes = ['history', 'profile','buy-coins','transactions','buy-coins','multiplayer']; // Example routes that need authentication
-  const playerRoute=['buy-coins', 'game', 'size', 'multiplayer' ]
-  const adminRoute=['users']
+  const playerRoute=['buy-coins', 'game', 'size', 'multiplayer']
+  const adminRoute=['users', 'statistics']
 
   if(adminRoute.includes(to.name) && !storeAuth.isAdmin){
     next({ name: 'dashboard' });
