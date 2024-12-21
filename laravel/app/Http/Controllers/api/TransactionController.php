@@ -42,9 +42,20 @@ class TransactionController extends Controller
         return response()->json($transactions);
     }
 
-    public function index()
+    public function index(Request $request)
 {
-    $transactions = Transaction::orderBy('transaction_datetime', 'desc')->paginate(15);
+    $type = $request->input('type');
+    $paymentType = $request->input('payment_type');
+
+    $transactions = Transaction::when($type, function ($query, $type) {
+        return $query->where('type', $type);
+    })
+    ->when($paymentType, function ($query, $paymentType) {
+        return $query->where('payment_type', $paymentType);
+    })
+    ->orderBy('transaction_datetime', 'desc')
+    ->paginate(15);
+
 
     return response()->json([
         'data' => TransactionResource::collection($transactions->items()),

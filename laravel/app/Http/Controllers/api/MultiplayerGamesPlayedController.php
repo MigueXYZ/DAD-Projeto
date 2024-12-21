@@ -116,11 +116,18 @@ class MultiplayerGamesPlayedController extends Controller
 
             // Calcular a pontuação de cada user
             $userScores = $groupedByUser->map(function ($games) {
-                $victories = $games->sum('player_won');
+                $totalGames = $games->count(); // Contar todas as partidas
+                $victories = $games->where('player_won', 1)->count(); // Contar vitórias
+                $defeats = $games->filter(function ($game) {
+                    // Considera derrota se não for vitória e não for NULL
+                    return $game->player_won === 0;
+                })->count();
+
                 return [
                     'user_id' => $games->first()->user_id,
                     'victories' => $victories,
-                    'defeats' => $games->count() - $victories,
+                    'defeats' => $defeats,
+                    'total_games' => $totalGames,
                 ];
             });
 
@@ -136,11 +143,12 @@ class MultiplayerGamesPlayedController extends Controller
             ];
         });
 
-        //order by board_id
+        // Order by board_id
         $scoreboard = $scoreboard->sortBy('board_id');
 
         return response()->json($scoreboard->values());
     }
+
 
 
 }

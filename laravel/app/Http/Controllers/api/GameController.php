@@ -24,6 +24,7 @@ class GameController extends Controller
         $by = $request->query('by');
         $order = $request->query('order');
         $ended= $request->query('ended');
+        $type= $request->query('type');
 
         // Validar a ordem de ordenação
         if ($order && !in_array($order, ['asc', 'desc'])) {
@@ -35,6 +36,10 @@ class GameController extends Controller
 
         if($ended){
             $query->where('status', 'E');
+        }
+
+        if($type){
+            $query->where('type', $type);
         }
 
         // Filtra por board, se fornecido
@@ -208,6 +213,7 @@ class GameController extends Controller
         $by = $request->query('by');
         $order = $request->query('order');
         $ended= $request->query('ended');
+        $type= $request->query('type');
 
         // Validar a ordem de ordenação
         if ($order && !in_array($order, ['asc', 'desc'])) {
@@ -219,6 +225,10 @@ class GameController extends Controller
 
         if($ended){
             $query->where('status', 'E');
+        }
+
+        if($type){
+            $query->where('type', $type);
         }
 
         // Filtra por board, se fornecido
@@ -311,5 +321,53 @@ class GameController extends Controller
             ->get();
         return response()->json($numGamesByGameMode);
     }
+
+    public function getScoreboard(Request $request): JsonResponse
+    {
+        // Scoreboard por tempo
+        $scoreboard_time = Game::select('board_id', 'created_user_id', Game::raw('min(total_time) as min_time'))
+            ->where('status', 'E')
+            ->groupBy('board_id', 'created_user_id')
+            ->get();
+
+        // Scoreboard por turnos
+        $scoreboard_turns = Game::select('board_id', 'created_user_id', Game::raw('min(total_turns_winner) as min_turns'))
+            ->where('status', 'E')
+            ->groupBy('board_id', 'created_user_id')
+            ->get();
+
+        $scoreboard = [
+            'time' => $scoreboard_time,
+            'turns' => $scoreboard_turns
+        ];
+
+        return response()->json($scoreboard);
+    }
+
+
+    public function getScoreboardMe(Request $request): JsonResponse
+    {
+        // Scoreboard por tempo para o usuário logado
+        $scoreboard_time = Game::select('board_id', 'created_user_id', Game::raw('min(total_time) as min_time'))
+            ->where('status', 'E')
+            ->where('created_user_id', $request->user()->id)
+            ->groupBy('board_id', 'created_user_id')
+            ->get();
+
+        // Scoreboard por turnos para o usuário logado
+        $scoreboard_turns = Game::select('board_id', 'created_user_id', Game::raw('min(total_turns_winner) as min_turns'))
+            ->where('status', 'E')
+            ->where('created_user_id', $request->user()->id)
+            ->groupBy('board_id', 'created_user_id')
+            ->get();
+
+        $scoreboard = [
+            'time' => $scoreboard_time,
+            'turns' => $scoreboard_turns
+        ];
+
+        return response()->json($scoreboard);
+    }
+
 
 }

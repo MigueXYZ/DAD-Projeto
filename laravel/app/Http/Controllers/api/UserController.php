@@ -341,4 +341,11 @@ class UserController extends Controller
         return response()->json(['num_users' => $num_users], 200);
     }
 
+    public function getNicknames(Request $request)
+    {
+        //return nicknames and their's correspondent id
+        $users = User::all('id', 'nickname');
+        return response()->json($users, 200);
+    }
+
 }

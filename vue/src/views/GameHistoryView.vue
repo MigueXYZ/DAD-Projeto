@@ -12,7 +12,7 @@
       </select>
 
       <!-- Ordenar por -->
-      <select v-model="filters.by" class="border p-2 w-full md:w-auto">
+      <select v-model="filters.by" class="border p-2 w-full md:w-auto" @change="fetchGames">
         <option value="">Order By</option>
         <option value="created_at">Played At</option>
         <option value="total_time">Total Time</option>
@@ -21,16 +21,18 @@
       </select>
 
       <!-- Ordem -->
-      <select v-model="filters.order" class="border p-2 w-full md:w-auto">
+      <select v-model="filters.order" class="border p-2 w-full md:w-auto" @change="fetchGames">
         <option value="">Order Direction</option>
         <option value="asc">Ascending</option>
         <option value="desc">Descending</option>
       </select>
 
-      <!-- Botão de Filtrar -->
-      <button @click="fetchGames" class="w-full lg:w-full py-3 bg-blue-700 hover:bg-blue-600 text-white rounded-md  transition duration-200 my-2">
-        Apply Filters
-      </button>
+      <!-- Filtro por tipo -->
+      <select v-model="filters.type" class="border p-2 w-full md:w-auto" @change="fetchGames">
+        <option value="">All Types</option>
+        <option value="M">Multiplayer</option>
+        <option value="S">Singleplayer</option>
+      </select>
     </div>
 
     <!-- Lista de Jogos -->
@@ -82,6 +84,7 @@ const filters = ref({
   board: "",
   by: "created_at",  // Ordenar por created_at por padrão
   order: "desc",      // Ordem descendente por padrão
+  type: "",
 });
 
 const loading = ref(false);
@@ -109,6 +112,7 @@ const fetchGames = async () => {
         by: filters.value.by,
         order: filters.value.order,
         page: page.value,  // Adiciona a página atual à requisição
+        type: filters.value.type,
       },
     });
     games.value = data.data; // Supondo que a API usa `data` como wrapper

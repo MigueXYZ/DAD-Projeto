@@ -300,7 +300,7 @@ export const useGameStore = defineStore('game', () => {
                     user_id: authStore.user.id,
                     transaction_datetime: new Date(),
                     brain_coins: coins,
-                    type:'I',
+                    type:'B',
                     game_id: gameF.id,
                 });
                 toast({

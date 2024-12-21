@@ -51,9 +51,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //estatisticas utilizadores
     Route::get('/users/total', [UserController::class , 'getNumUsers']);
     Route::get('/users/total/active', [UserController::class , 'getNumActiveUsers']);
-
-
+    Route::get('/scoreboards/me', [GameController::class , 'getScoreboardMe']);
 });
+
+Route::get('/scoreboards', [GameController::class , 'getScoreboard']);
+
 Route::post('/upload-avatar', [UserController::class , 'uploadAvatar']);
 
 Route::patch('/games/{game}', [GameController::class, 'update']);
@@ -68,6 +70,7 @@ Route::post('/users', [UserController::class, 'store']);
 
 Route::get('/users/names', [UserController::class, 'getNames']);
 
+Route::get('/users/nicknames', [UserController::class, 'getNicknames']);
 
 // Board Routes
 Route::get('/boards', [BoardController::class, 'index']);

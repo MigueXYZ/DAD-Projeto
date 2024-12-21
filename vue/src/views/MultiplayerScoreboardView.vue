@@ -31,7 +31,7 @@
               <td class="px-4 py-2">{{ index + 1 }}</td>
               <td class="px-4 py-2">{{ getPlayerNickname(player.user_id) }}</td>
               <td class="px-4 py-2">{{ player.victories }}</td>
-              <td class="px-4 py-2">{{ player.defeats }}</td>
+              <td class="px-4 py-2">{{ player.total_games-player.victories }}</td>
             </tr>
             </tbody>
           </table>
