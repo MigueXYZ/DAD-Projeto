@@ -68,8 +68,23 @@
         />
       </div>
 
-      <!-- Avatar Upload -->
+      <!-- Type -->
       <div>
+        <label for="type" class="block text-sm font-medium text-gray-700">Type:</label>
+        <select
+            id="type"
+            v-model="form.type"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-3 bg-white"
+        >
+          <option value="P">Player</option>
+          <option value="A">Admin</option>
+        </select>
+      </div>
+
+      <!-- Avatar Upload -->
+      <div
+        v-if="authStore.isAdmin"
+      >
         <label for="photo_filename" class="block text-sm font-medium text-gray-700">Avatar:</label>
         <input
             id="photo_filename"
@@ -104,7 +119,9 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { useToast } from '@/components/ui/toast/use-toast';
+import { useAuthStore } from '@/stores/auth';
 
+const authStore = useAuthStore();
 const router = useRouter();
 const { toast } = useToast();
 
@@ -115,6 +132,7 @@ const form = ref({
   confirmPassword: '',
   nickname: '',
   photo_filename: '',
+  type: 'P',
 });
 
 const photoPreview = ref('');
@@ -147,8 +165,11 @@ const register = async () => {
     formData.append('password', form.value.password);
     formData.append('nickname', form.value.nickname);
 
-    // Adiciona o tipo ao formulário
-    formData.append('type', 'P');
+    if(authStore.isAdmin){
+      formData.append('type', form.value.type);
+    }else{
+      formData.append('type', 'P');
+    }
 
     if (form.value.photo_filename) {
       const avatarData = new FormData();
@@ -173,7 +194,12 @@ const register = async () => {
     toast({ description: success.value });
 
     // Redireciona após sucesso
-    router.push('/login');
+    if(authStore.isAdmin){
+      router.push('/users');
+    }
+    else{
+      router.push('/login');
+    }
   } catch (err) {
     error.value = err.response?.data?.message || 'Registration failed.';
     toast({ description: error.value, variant: 'destructive' });

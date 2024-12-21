@@ -1,9 +1,9 @@
 <template>
     <div class="min-h-screen p-4">
       <h1 class="text-2xl font-bold mb-4">Users</h1>
+      <router-link to="/register" class="w-auto p-3 bg-blue-700 hover:bg-blue-600 text-white rounded-md transition duration-200 my-2 mx-2">Criar Conta</router-link>
   
       <div class="flex flex-wrap gap-4 mb-4">
-
       </div>
   
       <!-- Lista de Jogos -->

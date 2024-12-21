@@ -53,6 +53,13 @@ class UserController extends Controller
             'custom' => 'nullable|array',  // Validate JSON as array
         ]);
 
+        //id user isn't admin, it can't create an admin user
+        if($request->user()){
+            if($request->user()->type != 'A' && $validated_data['type'] == 'A'){
+                return response()->json(['error' => 'You cannot create an admin user'], 400);
+            }
+        }
+
         // Hash the password
         $validated_data['password'] = bcrypt($validated_data['password']);
         $validated_data['blocked'] = $validated_data['blocked'] ?? 0; // Default blocked to false
